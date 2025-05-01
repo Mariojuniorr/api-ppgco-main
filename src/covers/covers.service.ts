@@ -13,36 +13,21 @@ export class CoversService {
     return this.systemApliancesService.findAplianceValue(Cover.LOGIN);
   }
 
-  public async getResetPasswordCover() {
-    return this.systemApliancesService.findAplianceValue(Cover.RESET_PASSWORD);
+  public async getPasswordResetCover() {
+    return this.systemApliancesService.findAplianceValue(Cover.PASSWORD_RESET);
   }
 
-  public async getForgotPasswordCover() {
-    return this.systemApliancesService.findAplianceValue(Cover.FORGOT_PASSWORD);
-  }
-
-  public async setLoginCover(files: Record<string, Express.Multer.File[]>) {
-    const apliance = await this.systemApliancesService.findApliance(
-      Cover.LOGIN,
+  public async getRequestPasswordResetCover() {
+    return this.systemApliancesService.findAplianceValue(
+      Cover.REQUEST_PASSWORD_RESET,
     );
-
-    if (!apliance) {
-      throw new NotFoundException('Appliance not found');
-    }
-
-    const filePath = await apliance
-      .saveFiles(files)
-      .then(([uploadedFiles]) => uploadedFiles.getUrl());
-
-    return this.systemApliancesService.set(Cover.LOGIN, filePath);
   }
 
-  public async setResetPasswordCover(
+  public async updateCover(
+    cover: Cover,
     files: Record<string, Express.Multer.File[]>,
   ) {
-    const apliance = await this.systemApliancesService.findApliance(
-      Cover.RESET_PASSWORD,
-    );
+    const apliance = await this.systemApliancesService.findApliance(cover);
 
     if (!apliance) {
       throw new NotFoundException('Appliance not found');
@@ -52,24 +37,22 @@ export class CoversService {
       .saveFiles(files)
       .then(([uploadedFiles]) => uploadedFiles.getUrl());
 
-    return this.systemApliancesService.set(Cover.RESET_PASSWORD, filePath);
+    return this.systemApliancesService.set(cover, filePath);
   }
 
-  public async setForgotPasswordCover(
+  public async updateLoginCover(files: Record<string, Express.Multer.File[]>) {
+    return this.updateCover(Cover.LOGIN, files);
+  }
+
+  public async updateResetPasswordCover(
     files: Record<string, Express.Multer.File[]>,
   ) {
-    const apliance = await this.systemApliancesService.findApliance(
-      Cover.FORGOT_PASSWORD,
-    );
+    return this.updateCover(Cover.PASSWORD_RESET, files);
+  }
 
-    if (!apliance) {
-      throw new NotFoundException('Appliance not found');
-    }
-
-    const filePath = await apliance
-      .saveFiles(files)
-      .then(([uploadedFiles]) => uploadedFiles.getUrl());
-
-    return this.systemApliancesService.set(Cover.FORGOT_PASSWORD, filePath);
+  public async updateRequestPasswordResetCover(
+    files: Record<string, Express.Multer.File[]>,
+  ) {
+    return this.updateCover(Cover.REQUEST_PASSWORD_RESET, files);
   }
 }

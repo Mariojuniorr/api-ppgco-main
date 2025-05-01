@@ -5,8 +5,11 @@ import {
   BucketHelpers,
   BucketHttp,
   REMOTE_BUCKET,
-} from 'src/bucket';
-import { BucketFileApi, BucketFileApiInterface } from 'src/bucket/bucket-files';
+} from 'src/bucket--outdated';
+import {
+  BucketFileApi,
+  BucketFileApiInterface,
+} from 'src/bucket--outdated/bucket-files';
 import { BucketClientConfig } from './bucket.types';
 import { MagicMethods } from 'src/core';
 

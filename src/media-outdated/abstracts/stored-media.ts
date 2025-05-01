@@ -1,9 +1,7 @@
 import { Model } from 'sequelize-typescript';
 import { Optional, BuildOptions } from 'sequelize';
-import { Media } from 'src/media/entities';
 import { STORAGE_DISK } from 'src/media/media.constants';
 import { MediaStorage } from 'src/media/storage';
-import { HasMedia } from './has-media';
 
 export class StoredMedia extends Model {
   private storage: MediaStorage;

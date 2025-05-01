@@ -28,6 +28,7 @@ import { CreateUserDto, UpdateUserDto } from './dto';
 import { awaitAll, PromisePusherCallback } from 'src/utils';
 import { User } from './entities/user.entity';
 import { forgotPasswordTemplate, emailVerificationTemplate } from './templates';
+import { Media, MediaService } from 'src/media';
 
 interface CreateOptions extends SequelizeCreateOptions<Attributes<User>> {
   mailData?: string;
@@ -41,6 +42,7 @@ export class UserService extends CommonService<User, typeof User> {
   public constructor(
     @Inject(USER_REPOSITORY) model: typeof User,
     private readonly sequelize: Sequelize,
+    private readonly mediaService: MediaService,
     private readonly rolesService: RolesService,
     private readonly mailerService: MailerService,
     private readonly configService: ConfigService,
@@ -77,7 +79,7 @@ export class UserService extends CommonService<User, typeof User> {
         add(this.userHasRolesService.addRoleToUser(user, roles, transaction));
 
         if (files) {
-          add(user.saveFiles(files));
+          add(this.setUserAvatar(user, files));
         }
       });
 
@@ -97,6 +99,37 @@ export class UserService extends CommonService<User, typeof User> {
     return user;
   }
 
+  public async setUserMedias(
+    user: User,
+    filesCollections: Record<string, Express.Multer.File[]>,
+  ) {
+    const promises = _map(filesCollections, (files, collectionName) => {
+      return this.setUserMediaCollection(user, files[0], collectionName);
+    });
+  }
+
+  async setUserMediaCollection(
+    user: User,
+    file: Express.Multer.File,
+    collectionName: string,
+    transaction?: Transaction,
+  ): Promise<Media> {
+    const mediaRef = user[collectionName + 'Ref'];
+
+    if (mediaRef) {
+      await this.mediaService.deleteMedia(mediaRef.mediaId, transaction);
+    }
+
+    return this.mediaService.creatFromMulterFile(
+      file,
+      {
+        model_id: user.id,
+        model_type: user.constructor.name,
+        collection_name: collectionName,
+      },
+      transaction,
+    );
+  }
   public async find(
     page: number,
     perPage: number,

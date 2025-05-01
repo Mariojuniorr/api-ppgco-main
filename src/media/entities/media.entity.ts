@@ -5,9 +5,9 @@ import {
   UpdatedAt,
   BeforeCreate,
   BeforeSave,
+  Model,
 } from 'sequelize-typescript';
 import { generateUUID } from 'src/utils';
-import { HasMedia, StoredMedia } from '../abstracts';
 import { STORAGE_DISK } from '../media.constants';
 
 export interface MediaInputData {
@@ -19,7 +19,7 @@ export interface MediaInputData {
 }
 
 @Table({ tableName: 'media' })
-export class Media extends StoredMedia {
+export class Media extends Model {
   @Column({ primaryKey: true, autoIncrement: true })
   id: number;
 
@@ -48,9 +48,6 @@ export class Media extends StoredMedia {
   disk: string;
 
   @Column
-  conversions_disk: string;
-
-  @Column
   size: number;
 
   @Column
@@ -68,24 +65,24 @@ export class Media extends StoredMedia {
     instance.uuid = generateUUID();
   }
 
-  static async fromMulterFile(
-    file: Express.Multer.File,
-    model: HasMedia,
-  ): Promise<Media> {
-    const media = new Media();
+  // static async fromMulterFile(
+  //   file: Express.Multer.File,
+  //   model: HasMedia,
+  // ): Promise<Media> {
+  //   const media = new Media();
 
-    const storedFile = await media.storageAttempt(file);
+  //   const storedFile = await media.storageAttempt(file);
 
-    media.model_type = model.getModelName();
-    media.model_id = model.getModelPrimaryKey();
-    media.collection_name = file.fieldname;
-    media.name = file.originalname;
-    media.mime_type = file.mimetype;
-    media.size = file.size;
-    media.order_column = 1;
-    media.disk = STORAGE_DISK;
-    media.file_name = storedFile.path + storedFile.extension;
+  //   media.model_type = model.getModelName();
+  //   media.model_id = model.getModelPrimaryKey();
+  //   media.collection_name = file.fieldname;
+  //   media.name = file.originalname;
+  //   media.mime_type = file.mimetype;
+  //   media.size = file.size;
+  //   media.order_column = 1;
+  //   media.disk = STORAGE_DISK;
+  //   media.file_name = storedFile.path + storedFile.extension;
 
-    return media.save();
-  }
+  //   return media.save();
+  // }
 }

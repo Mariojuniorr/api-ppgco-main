@@ -38,6 +38,7 @@ import { Dialect } from 'sequelize';
 import { DB } from './app.constants';
 import { isProduction } from './utils';
 import { entities } from './app.entities';
+import { BucketModule } from './ppgco-bucket/ppgco-bucket.module';
 // {MODULE_IMPORT} Don't delete me, I'm used for automatic code generation
 
 @Module({
@@ -95,6 +96,7 @@ import { entities } from './app.entities';
     PublicationCoauthorsModule,
     UsersPasswordResetModule,
     CoversModule,
+    BucketModule,
     // {MODULE} Don't delete me, I'm used for automatic code generation
   ],
   controllers: [AuthController],

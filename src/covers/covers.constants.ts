@@ -1,8 +1,13 @@
 export enum Cover {
   LOGIN = 'login_page_image',
-  RESET_PASSWORD = 'reset_password_page_image',
-  FORGOT_PASSWORD = 'forgot_password_page_image',
+  PASSWORD_RESET = 'password_reset_page_image',
+  REQUEST_PASSWORD_RESET = 'request_password_reset_page_image',
 }
+
+export type CollectionNames =
+  | 'login_cover'
+  | 'password_reset_cover'
+  | 'request_password_reset_cover';
 
 export const COLLECTIONS = {
   covers: {
@@ -13,19 +18,19 @@ export const COLLECTIONS = {
   },
   login_cover: {
     maxSize: 100 * 1024 * 1024,
-    maxCount: 2,
+    maxCount: 1,
     required: false,
     accepteds: ['image/*'],
   },
-  reset_password_cover: {
+  password_reset_cover: {
     maxSize: 100 * 1024 * 1024,
-    maxCount: 2,
+    maxCount: 1,
     required: false,
     accepteds: ['image/*'],
   },
-  forgot_password_cover: {
+  request_password_reset_cover: {
     maxSize: 100 * 1024 * 1024,
-    maxCount: 2,
+    maxCount: 1,
     required: false,
     accepteds: ['image/*'],
   },

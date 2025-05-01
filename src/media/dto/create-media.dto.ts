@@ -1,5 +1,6 @@
 import { z } from 'zod';
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, PartialType, PickType } from '@nestjs/swagger';
+import { createZodDto } from 'nestjs-zod';
 
 export const createMediaSchema = z.object({
   model_type: z.string().max(255),
@@ -12,56 +13,16 @@ export const createMediaSchema = z.object({
   disk: z.string().max(255),
   conversions_disk: z.string().max(255).optional(),
   size: z.number(),
-  manipulations: z.string(),
-  custom_properties: z.string(),
-  generated_conversions: z.string(),
-  responsive_images: z.string(),
+  manipulations: z.string().optional(),
+  custom_properties: z.string().optional(),
+  generated_conversions: z.string().optional(),
+  responsive_images: z.string().optional(),
   order_column: z.number().optional(),
 });
 
-export class CreateMediaDto {
-  @ApiProperty({ required: true })
-  model_type: string;
-
-  @ApiProperty({ required: true })
-  model_id: number;
-
-  @ApiProperty()
-  uuid: string;
-
-  @ApiProperty({ required: true })
-  collection_name: string;
-
-  @ApiProperty({ required: true })
-  name: string;
-
-  @ApiProperty({ required: true })
-  file_name: string;
-
-  @ApiProperty()
-  mime_type: string;
-
-  @ApiProperty({ required: true })
-  disk: string;
-
-  @ApiProperty()
-  conversions_disk: string;
-
-  @ApiProperty({ required: true })
-  size: number;
-
-  @ApiProperty({ required: true })
-  manipulations: string;
-
-  @ApiProperty({ required: true })
-  custom_properties: string;
-
-  @ApiProperty({ required: true })
-  generated_conversions: string;
-
-  @ApiProperty({ required: true })
-  responsive_images: string;
-
-  @ApiProperty()
-  order_column: number;
-}
+export class CreateMediaDto extends createZodDto(createMediaSchema) {}
+export class MediaConverterDto extends PickType(CreateMediaDto, [
+  'model_type',
+  'model_id',
+  'collection_name',
+]) {}

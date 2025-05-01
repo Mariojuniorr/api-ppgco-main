@@ -1,5 +1,8 @@
-import { BucketConfig } from 'src/bucket';
-import { BucketFileRegister, BucketFileUpload } from 'src/bucket/bucket.types';
+import { BucketConfig } from 'src/bucket--outdated';
+import {
+  BucketFileRegister,
+  BucketFileUpload,
+} from 'src/bucket--outdated/bucket.types';
 
 export interface BucketCredentials {
   accessKeyId: string;

@@ -6,7 +6,7 @@ import {
 } from 'src/media';
 import { Public } from 'src/core';
 import { CoversService } from './covers.service';
-import { COLLECTIONS } from './covers.constants';
+import { CollectionNames, COLLECTIONS } from './covers.constants';
 
 @Controller('covers')
 export class CoversController {
@@ -29,7 +29,7 @@ export class CoversController {
     type: String,
   })
   public getResetPasswordCover() {
-    return this.coversService.getResetPasswordCover();
+    return this.coversService.getPasswordResetCover();
   }
 
   @Public()
@@ -39,49 +39,77 @@ export class CoversController {
     type: String,
   })
   public getForgotPasswordCover() {
-    return this.coversService.getForgotPasswordCover();
+    return this.coversService.getRequestPasswordResetCover();
   }
 
-  @Public()
-  @Post('/login')
+  @Post()
   @ApiOkResponse({
     description: `This endpoint is used to get login cover image`,
     type: String,
   })
   @UseMediaValidatorInterceptor(COLLECTIONS)
+  public async setCovers(
+    @UploadedFiles(UploadedMediaValidationPipe(COLLECTIONS))
+    files: Record<CollectionNames, Express.Multer.File[]>,
+  ) {
+    if (files.login_cover) {
+      await this.coversService.updateLoginCover({
+        login_cover: files.login_cover,
+      });
+    }
+    if (files.password_reset_cover) {
+      await this.coversService.updateResetPasswordCover({
+        password_reset_cover: files.password_reset_cover,
+      });
+    }
+    if (files.request_password_reset_cover) {
+      await this.coversService.updateRequestPasswordResetCover({
+        request_password_reset_cover: files.request_password_reset_cover,
+      });
+    }
+
+    return {
+      message: 'Files uploaded successfully',
+    };
+  }
+
+  @Post('/login')
+  @ApiOkResponse({
+    description: `This endpoint is used to get login cover image`,
+    type: String,
+  })
+  @UseMediaValidatorInterceptor(COLLECTIONS) // TODO apply pick to only get the correct collection
   public postLoginCover(
     @UploadedFiles(UploadedMediaValidationPipe(COLLECTIONS))
     files: Record<string, Express.Multer.File[]>,
   ) {
     console.log({ files });
-    return this.coversService.setLoginCover(files);
+    return this.coversService.updateLoginCover(files);
   }
 
-  @Public()
-  @Post('/reset-password')
+  @Post('/password-reset')
   @ApiOkResponse({
     description: `This endpoint is used to get reset password cover image`,
     type: String,
   })
-  @UseMediaValidatorInterceptor(COLLECTIONS)
+  @UseMediaValidatorInterceptor(COLLECTIONS) // TODO apply pick to only get the correct collection
   public postResetPasswordCover(
     @UploadedFiles(UploadedMediaValidationPipe(COLLECTIONS))
     files: Record<string, Express.Multer.File[]>,
   ) {
-    return this.coversService.setResetPasswordCover(files);
+    return this.coversService.updateResetPasswordCover(files);
   }
 
-  @Public()
-  @Post('/forgot-password')
+  @Post('/request-password-reset')
   @ApiOkResponse({
     description: `This endpoint is used to get forgot password cover image`,
     type: String,
   })
-  @UseMediaValidatorInterceptor(COLLECTIONS)
-  public postForgotPasswordCover(
+  @UseMediaValidatorInterceptor(COLLECTIONS) // TODO apply pick to only get the correct collection
+  public postRequestPasswordResetCover(
     @UploadedFiles(UploadedMediaValidationPipe(COLLECTIONS))
     files: Record<string, Express.Multer.File[]>,
   ) {
-    return this.coversService.setForgotPasswordCover(files);
+    return this.coversService.updateRequestPasswordResetCover(files);
   }
 }

@@ -9,6 +9,8 @@ import {
   DefaultScope,
   DeletedAt,
   HasMany,
+  HasOne,
+  Model,
   Scopes,
   Table,
   UpdatedAt,
@@ -18,38 +20,13 @@ import _first from 'lodash/first';
 import _trimStart from 'lodash/trimStart';
 import _trimEnd from 'lodash/trimEnd';
 import _snakeCase from 'lodash/snakeCase';
-import { ModelWithMedia } from 'src/media';
 import { Role } from 'src/roles/entities';
 import { UserHasRole } from 'src/user-has-roles/entities';
+import { Media } from 'src/media/entities';
 
 interface constructor<T> {
   new (...args: any[]): T;
 }
-
-// function setCustomAttributes<T>(instance: T, ModelClass: constructor<T>) {
-//   function findGetAttributeMethods(instance: T) {
-//     return Object.getOwnPropertyNames(instance).filter((name) => {
-//       return (
-//         typeof instance[name] === 'function' && /^get.*Attribute$/.test(name)
-//       );
-//     });
-//   }
-
-//   const methodNames = findGetAttributeMethods(instance);
-//   const attributeNames = methodNames.map((name) =>
-//     _snakeCase(_trimEnd(_trimStart(name, 'get'), 'Attribute')),
-//   );
-
-//   console.log({
-//     properties: Object.getOwnPropertyNames(instance),
-//     methodNames,
-//     attributeNames,
-//   });
-
-//   attributeNames.forEach((attributeName, index) => {
-//     ModelClass.prototype[attributeName] = methodNames[index];
-//   });
-// }
 
 @Scopes(() => ({
   full: {
@@ -71,7 +48,7 @@ interface constructor<T> {
   },
 }))
 @Table({ tableName: 'users' })
-export class User extends ModelWithMedia {
+export class User extends Model<User> {
   @Column
   first_name: string;
 
@@ -124,10 +101,6 @@ export class User extends ModelWithMedia {
   @HasMany(() => UserHasRole)
   userHasRole: UserHasRole;
 
-  @ApiProperty({})
-  @Column(DataTypes.VIRTUAL)
-  avatar: string;
-
   // @AfterFind
   // public static formatFones(instance: User) {
   //   console.log({ user: instance });
@@ -142,18 +115,39 @@ export class User extends ModelWithMedia {
     );
   }
 
-  public registerMediaCollections(): void {
-    this.mediaCollection.addMediaCollection('avatar');
-  }
+  @ApiProperty({})
+  @Column({
+    type: DataTypes.VIRTUAL,
+    get() {
+      const avatarRef = (this as any).avatarRef;
+      return avatarRef ? avatarRef.media : null;
+    },
+  })
+  avatar: any;
 
-  public async getAvatar() {
-    const medias = await this.getMedias('avatar');
-    return medias[0];
-  }
+  @HasOne(() => Media, {
+    foreignKey: 'entityId',
+    constraints: false,
+    scope: {
+      entityType: 'user',
+      referenceType: 'avatar',
+    },
+    as: 'avatarRef',
+  })
+  avatarRef: Media;
 
-  public async getAvatarUrl() {
-    return _first(await this.getMediaUrl('avatar'));
-  }
+  // public registerMediaCollections(): void {
+  //   this.mediaCollection.addMediaCollection('avatar');
+  // }
+
+  // public async getAvatar() {
+  //   const medias = await this.getMedias('avatar');
+  //   return medias[0];
+  // }
+
+  // public async getAvatarUrl() {
+  //   return _first(await this.getMediaUrl('avatar'));
+  // }
 
   public is(...roleNames: string[]) {
     const counterRoles = (accum: number, role: Role) => {

@@ -1,5 +1,5 @@
-import { BucketHelpers, BucketHttp } from 'src/bucket';
-import { ENDPOINTS } from 'src/bucket';
+import { BucketHelpers, BucketHttp } from 'src/bucket--outdated';
+import { ENDPOINTS } from 'src/bucket--outdated';
 import { BucketFileRegister } from '../bucket.types';
 import path from 'path';
 
