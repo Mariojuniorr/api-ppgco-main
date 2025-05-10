@@ -74,6 +74,9 @@ export class VStudent extends Model {
   student_name: string;
 
   @Column
+  advisor_name: string;
+
+  @Column
   @ForeignKey(() => User)
   user_id: number;
 

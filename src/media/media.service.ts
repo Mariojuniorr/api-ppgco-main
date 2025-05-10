@@ -1,9 +1,9 @@
 import { Inject, Injectable } from '@nestjs/common';
 import _isEmpty from 'lodash/isEmpty';
 import _flatMap from 'lodash/flatMap';
-import { MEDIA_REPOSITORY } from '../media.constants';
-import { Media } from '../entities';
-import { CreateMediaDto, MediaConverterDto, UpdateMediaDto } from '../dto';
+import { MEDIA_REPOSITORY } from './media.constants';
+import { Media } from './entities';
+import { CreateMediaDto, MediaConverterDto, UpdateMediaDto } from './dto';
 import { StorageService } from 'src/storage/storage.service';
 import { Attributes, CreateOptions, Transaction } from 'sequelize';
 
@@ -33,7 +33,7 @@ export class MediaService {
   public async creatFromMulterFile(
     file: Express.Multer.File,
     mediaConverterDto: MediaConverterDto,
-    transaction?: Transaction,
+    options?: { transaction?: Transaction },
   ) {
     const { name: fileName, extension } = await this.storageService.saveFile(
       file,
@@ -54,7 +54,7 @@ export class MediaService {
         order_column: 1,
         disk: 'STORAGE_DISK',
       },
-      { transaction },
+      { transaction: options?.transaction },
     );
   }
 

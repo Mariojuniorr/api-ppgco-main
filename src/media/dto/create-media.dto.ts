@@ -9,6 +9,7 @@ export const createMediaSchema = z.object({
   collection_name: z.string().max(255),
   name: z.string().max(255),
   file_name: z.string().max(255),
+  extension: z.string().max(255),
   mime_type: z.string().max(255).optional(),
   disk: z.string().max(255),
   conversions_disk: z.string().max(255).optional(),

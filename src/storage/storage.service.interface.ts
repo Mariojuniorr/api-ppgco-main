@@ -1,6 +1,6 @@
 export type BucketFileUpload = {
   file: Express.Multer.File;
-  description: string;
+  description?: string;
   password?: string;
   collection_name: string;
 };
