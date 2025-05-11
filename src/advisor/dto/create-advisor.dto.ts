@@ -1,6 +1,6 @@
 import { z } from 'zod';
-import { customCreateZodDto } from 'src/core';
 import dayjs from 'dayjs';
+import { createZodDto } from 'nestjs-zod';
 
 const validateDate = (date: string) => dayjs(date).isValid();
 
@@ -18,7 +18,7 @@ export const createAdvisorSchema = z.object({
 
 export const createAdvisorByListSchema = z.array(createAdvisorSchema);
 
-export class CreateAdvisorDto extends customCreateZodDto(createAdvisorSchema) {}
-export class CreateAdvisorByListDto extends customCreateZodDto(
+export class CreateAdvisorDto extends createZodDto(createAdvisorSchema) {}
+export class CreateAdvisorByListDto extends createZodDto(
   createAdvisorByListSchema,
 ) {}

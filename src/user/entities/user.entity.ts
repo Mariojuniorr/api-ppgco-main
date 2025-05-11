@@ -1,12 +1,10 @@
 import { ApiHideProperty, ApiProperty } from '@nestjs/swagger';
 import {
   AfterCreate,
-  AfterFind,
-  AfterSync,
+  AfterUpdate,
   BelongsToMany,
   Column,
   CreatedAt,
-  DefaultScope,
   DeletedAt,
   HasMany,
   HasOne,
@@ -23,6 +21,8 @@ import _snakeCase from 'lodash/snakeCase';
 import { Role } from 'src/roles/entities';
 import { UserHasRole } from 'src/user-has-roles/entities';
 import { Media } from 'src/media/entities';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import { EVENTS } from '../user.enum';
 
 interface constructor<T> {
   new (...args: any[]): T;
@@ -49,6 +49,12 @@ interface constructor<T> {
 }))
 @Table({ tableName: 'users' })
 export class User extends Model<User> {
+  private static eventEmitter: EventEmitter2;
+
+  static injectDependencies(eventEmitter: EventEmitter2) {
+    User.eventEmitter = eventEmitter;
+  }
+
   @Column
   first_name: string;
 
@@ -59,32 +65,32 @@ export class User extends Model<User> {
   email: string;
 
   @Column
-  phone: string;
+  phone?: string;
 
   @Column
   @ApiHideProperty()
   password: string;
 
   @Column
-  remember_token: string;
+  remember_token?: string;
 
   @Column
-  email_verified_at: Date;
+  email_verified_at?: Date;
 
   @Column
-  last_login_at: Date;
+  last_login_at?: Date;
 
   @Column
-  activated: boolean;
+  activated?: boolean;
 
   @Column
-  forbidden: boolean;
+  forbidden?: boolean;
 
   @Column
-  language: string;
+  language?: string;
 
   @Column
-  birth_date: Date;
+  birth_date?: Date;
 
   @CreatedAt
   created_at: Date;
@@ -125,6 +131,10 @@ export class User extends Model<User> {
   })
   avatar: any;
 
+  @ApiProperty()
+  @Column({ type: DataTypes.VIRTUAL })
+  avatarBuffer?: Express.Multer.File;
+
   @HasOne(() => Media, {
     foreignKey: 'entityId',
     constraints: false,
@@ -157,5 +167,13 @@ export class User extends Model<User> {
     const count = roles.reduce(counterRoles, 0);
 
     return count === roleNames.length;
+  }
+
+  @AfterCreate
+  @AfterUpdate
+  static async emitUploadEvent(instance: User) {
+    if (instance.avatarBuffer && User.eventEmitter) {
+      User.eventEmitter.emit(EVENTS.avatarUpload, instance);
+    }
   }
 }

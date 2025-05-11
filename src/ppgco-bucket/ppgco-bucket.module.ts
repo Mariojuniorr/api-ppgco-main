@@ -1,8 +1,9 @@
 import { Module } from '@nestjs/common';
-import { PpgcoBucketService } from './services/ppgco-bucket.service';
 import { HttpModule } from '@nestjs/axios';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ApiKeyModule } from 'src/api-key';
+import { PpgcoBucketService } from './services/ppgco-bucket.service';
+import { PpgcoBucketApiService, PpgcoBucketAuthService } from './services';
 
 @Module({
   imports: [
@@ -20,7 +21,11 @@ import { ApiKeyModule } from 'src/api-key';
       inject: [ConfigService],
     }),
   ],
-  providers: [PpgcoBucketService],
-  exports: [PpgcoBucketService],
+  providers: [
+    PpgcoBucketAuthService,
+    PpgcoBucketApiService,
+    PpgcoBucketService,
+  ],
+  exports: [PpgcoBucketAuthService, PpgcoBucketApiService, PpgcoBucketService],
 })
 export class PpgcoBucketModule {}

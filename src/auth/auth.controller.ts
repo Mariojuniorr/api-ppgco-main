@@ -12,7 +12,8 @@ import {
 import { ApiOkResponse } from '@nestjs/swagger';
 import _map from 'lodash/map';
 import { BearerToken, Public, ZodValidationPipe } from 'src/core';
-import { CurrentUser, User } from 'src/user';
+import { User } from 'src/user/entities';
+import { CurrentUser } from 'src/user/user.decorator';
 import { Permission, PermissionsService } from 'src/permissions';
 import { AuthService } from './auth.service';
 import {

@@ -3,9 +3,12 @@ import _isEmpty from 'lodash/isEmpty';
 import _flatMap from 'lodash/flatMap';
 import { MEDIA_REPOSITORY } from './media.constants';
 import { Media } from './entities';
-import { CreateMediaDto, MediaConverterDto, UpdateMediaDto } from './dto';
+import { CreateMediaDto, UpdateMediaDto } from './dto';
 import { StorageService } from 'src/storage/storage.service';
 import { Attributes, CreateOptions, Transaction } from 'sequelize';
+import { Model } from 'sequelize-typescript';
+import { StorageDisk } from 'src/storage/storage.enum';
+import { DISK } from 'src/storage';
 
 type MediaKeyAttributes =
   | { id: number }
@@ -32,27 +35,30 @@ export class MediaService {
 
   public async creatFromMulterFile(
     file: Express.Multer.File,
-    mediaConverterDto: MediaConverterDto,
+    metadata: { model: string; key: number; collectionName: string },
     options?: { transaction?: Transaction },
   ) {
+    const { model, key, collectionName } = metadata;
+
     const { name: fileName, extension } = await this.storageService.saveFile(
       file,
-      mediaConverterDto.collection_name,
+      collectionName,
     );
+
+    const fullName = [fileName, extension].join('.');
 
     return this.create(
       {
-        ...mediaConverterDto,
-        file_name: [fileName, extension].join('.'),
+        file_name: fullName,
         mime_type: file.mimetype,
         size: file.size,
         extension: extension,
-        model_type: mediaConverterDto.model_type,
-        model_id: mediaConverterDto.model_id,
-        collection_name: file.fieldname,
+        model_type: model,
+        model_id: key,
+        collection_name: collectionName,
         name: file.originalname,
         order_column: 1,
-        disk: 'STORAGE_DISK',
+        disk: DISK,
       },
       { transaction: options?.transaction },
     );

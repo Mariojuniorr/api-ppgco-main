@@ -32,11 +32,7 @@ import { RoleHasPermissionsModule } from 'src/role-has-permissions';
 import { DtoPaginatedModelGenerator } from './generators/dto-paginated-model.generator';
 
 @Module({
-  imports: [
-    SequelizeModule.forFeature(),
-    PermissionsModule,
-    RoleHasPermissionsModule,
-  ],
+  imports: [PermissionsModule, RoleHasPermissionsModule],
   exports: [
     CrudGeneratorService,
     ZodHelper,

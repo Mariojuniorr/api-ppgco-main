@@ -1,28 +1,36 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { SequelizeModule } from '@nestjs/sequelize';
+import { Sequelize } from 'sequelize-typescript';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import { ActivationsModule } from 'src/activations/activations.module';
+import { UsersPasswordResetModule } from 'src/users-password-reset';
+import { UserHasRolesModule } from 'src/user-has-roles';
+import { MailerModule } from 'src/mailer/mailer.module';
+import { MediaModule } from 'src/media';
+import { RolesModule } from 'src/roles';
 import { UserService } from './user.service';
 import { UserController } from './user.controller';
-import { User } from './entities/user.entity';
 import { userProviders } from './user.providers';
-import { MediaModule } from 'src/media';
-import { MailerModule } from 'src/mailer/mailer.module';
-import { ActivationsModule } from 'src/activations/activations.module';
-import { UserHasRolesModule } from 'src/user-has-roles';
-import { RolesModule } from 'src/roles';
-import { UsersPasswordResetModule } from 'src/users-password-reset';
+import { User } from './entities';
 
 @Module({
   imports: [
-    SequelizeModule.forFeature([User]),
+    // forwardRef(() => SequelizeModule.forFeature([User])),
     RolesModule,
     MediaModule,
     MailerModule,
     ActivationsModule,
     UserHasRolesModule,
-    UsersPasswordResetModule
+    UsersPasswordResetModule,
   ],
   controllers: [UserController],
   providers: [UserService, ...userProviders],
   exports: [UserService],
 })
-export class UserModule {}
+export class UserModule {
+  constructor(private eventEmitter: EventEmitter2) {}
+
+  onModuleInit() {
+    User.injectDependencies(this.eventEmitter);
+  }
+}

@@ -154,7 +154,7 @@ export class AdvisorService {
   }
 
   public async create(
-    createAdvisorDto: CreateAdvisorDto,
+    createAdvisorDto: InstanceType<typeof CreateAdvisorDto>,
     options?: CreateOptions,
   ) {
     const { lattes, research_line_id, phone, ...advisorUserData } =

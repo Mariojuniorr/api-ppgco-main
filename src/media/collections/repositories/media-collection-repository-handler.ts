@@ -1,8 +1,15 @@
 import { Model } from 'sequelize-typescript';
 import _map from 'lodash/map';
 import _flatten from 'lodash/flatten';
-import { HasMedia } from 'src/media/abstracts';
+// import { HasMedia } from 'src/media/abstracts';
 import { MediaCollectionRepository } from './media-collection-repository';
+
+interface HasMedia {
+  getModelName(): string;
+  getModelPrimaryKey(): number;
+  registerMediaCollections(): void;
+  getCollectionMetadata(): Record<string, MediaCollectionRepository>;
+}
 
 export class MediaCollectionRepositoryHandler {
   private collections: Record<string, MediaCollectionRepository> = {};

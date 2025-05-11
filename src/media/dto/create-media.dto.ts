@@ -22,7 +22,7 @@ export const createMediaSchema = z.object({
 });
 
 export class CreateMediaDto extends createZodDto(createMediaSchema) {}
-export class MediaConverterDto extends PickType(CreateMediaDto, [
+export class MediaDto extends PickType(CreateMediaDto, [
   'model_type',
   'model_id',
   'collection_name',

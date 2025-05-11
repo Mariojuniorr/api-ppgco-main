@@ -33,9 +33,10 @@ export class CoversService {
       throw new NotFoundException('Appliance not found');
     }
 
-    const filePath = await apliance
-      .saveFiles(files)
-      .then(([uploadedFiles]) => uploadedFiles.getUrl());
+    // const filePath = await apliance
+    //   .saveFiles(files)
+    //   .then(([uploadedFiles]) => uploadedFiles.getUrl());
+    const filePath = ''; // TODO fix this
 
     return this.systemApliancesService.set(cover, filePath);
   }

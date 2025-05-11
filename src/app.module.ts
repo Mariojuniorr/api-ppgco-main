@@ -2,43 +2,45 @@ import { Logger, Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { SequelizeModule } from '@nestjs/sequelize';
 import { JwtModule } from '@nestjs/jwt';
-import { AuthService, AuthController, AuthModule } from './auth';
-import { UserModule } from './user';
-import { CrudGeneratorModule, crudGeneratorCommands } from './crud-generator';
-import { StudentModule } from './student';
-import { MilestoneModule } from './milestone';
-import { MilestoneDocumentModule } from './milestone-document';
-import { ProjectModule } from './project';
-import { AdvisorModule } from './advisor';
-import { ResearchLineModule } from './research-line';
-import { DisconnectedStudentModule } from './disconnected-student';
-import { MilestoneHistoryModule } from './milestone-history';
-import { PublicationModule } from './publication';
-import { ProjectHasCoadvisorModule } from './project-has-coadvisor';
-import { RolesModule } from './roles';
-import { UserHasRolesModule } from './user-has-roles';
-import { RoleHasPermissionsModule } from './role-has-permissions';
-import { PermissionsModule } from './permissions';
-import { MediaModule } from './media';
-import { MailerModule } from './mailer';
-import { ActivationsModule } from './activations';
-import { EmailVerificationModule } from './email-verification';
-import { CoursesModule } from './courses';
-import { SubjectsModule } from './subjects';
-import { SystemApliancesModule } from './system-apliances';
-import { UserHasPermissionsModule } from './user-has-permissions';
-import { DocumentsModule } from './documents';
-import { MilestoneSituationModule } from './milestone-situation';
-import { DefaultMilestonesModule } from './default-milestones/default-milestones.module';
-import { NotificationsModule } from './notifications';
-import { PublicationCoauthorsModule } from './publication-coauthors';
-import { UsersPasswordResetModule } from './users-password-reset';
-import { CoversModule } from './covers/covers.module';
+import { EventEmitterModule } from '@nestjs/event-emitter';
 import { Dialect } from 'sequelize';
-import { DB } from './app.constants';
-import { isProduction } from './utils';
-import { entities } from './app.entities';
-import { BucketModule } from './ppgco-bucket/ppgco-bucket.module';
+import { DB } from 'src/app.constants';
+import { entities } from 'src/app.entities';
+import { isProduction } from 'src/utils';
+import { AuthService, AuthController, AuthModule } from 'src/auth';
+import { UserModule } from 'src/user';
+import { CrudGeneratorModule, crudGeneratorCommands } from 'src/crud-generator';
+import { StudentModule } from 'src/student';
+import { MilestoneModule } from 'src/milestone';
+import { MilestoneDocumentModule } from 'src/milestone-document';
+import { ProjectModule } from 'src/project';
+import { AdvisorModule } from 'src/advisor';
+import { ResearchLineModule } from 'src/research-line';
+import { DisconnectedStudentModule } from 'src/disconnected-student';
+import { MilestoneHistoryModule } from 'src/milestone-history';
+import { PublicationModule } from 'src/publication';
+import { ProjectHasCoadvisorModule } from 'src/project-has-coadvisor';
+import { RolesModule } from 'src/roles';
+import { UserHasRolesModule } from 'src/user-has-roles';
+import { RoleHasPermissionsModule } from 'src/role-has-permissions';
+import { PermissionsModule } from 'src/permissions';
+import { MediaModule } from 'src/media';
+import { MailerModule } from 'src/mailer';
+import { ActivationsModule } from 'src/activations';
+import { EmailVerificationModule } from 'src/email-verification';
+import { CoursesModule } from 'src/courses';
+import { SubjectsModule } from 'src/subjects';
+import { SystemApliancesModule } from 'src/system-apliances';
+import { UserHasPermissionsModule } from 'src/user-has-permissions';
+import { DocumentsModule } from 'src/documents';
+import { MilestoneSituationModule } from 'src/milestone-situation';
+import { DefaultMilestonesModule } from 'src/default-milestones/default-milestones.module';
+import { NotificationsModule } from 'src/notifications';
+import { PublicationCoauthorsModule } from 'src/publication-coauthors';
+import { UsersPasswordResetModule } from 'src/users-password-reset';
+import { CoversModule } from 'src/covers';
+import { PpgcoBucketModule } from 'src/ppgco-bucket';
+// import { BucketModule } from 'src/ppgco-bucket/ppgco-bucket.module';
 // {MODULE_IMPORT} Don't delete me, I'm used for automatic code generation
 
 @Module({
@@ -60,6 +62,7 @@ import { BucketModule } from './ppgco-bucket/ppgco-bucket.module';
       }),
       inject: [ConfigService],
     }),
+    EventEmitterModule.forRoot(),
     JwtModule.register({
       global: true,
       secret: process.env.JWT_SECRET_KEY,
@@ -68,6 +71,7 @@ import { BucketModule } from './ppgco-bucket/ppgco-bucket.module';
     AuthModule,
     ProjectModule,
     CrudGeneratorModule,
+    // PpgcoBucketModule,
     PublicationModule,
     StudentModule,
     MilestoneModule,
@@ -96,7 +100,6 @@ import { BucketModule } from './ppgco-bucket/ppgco-bucket.module';
     PublicationCoauthorsModule,
     UsersPasswordResetModule,
     CoversModule,
-    BucketModule,
     // {MODULE} Don't delete me, I'm used for automatic code generation
   ],
   controllers: [AuthController],

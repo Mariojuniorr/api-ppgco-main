@@ -1,7 +1,14 @@
-import { HasMedia } from 'src/media/abstracts';
+// import { HasMedia } from 'src/media/abstracts';
 import { Media } from 'src/media/entities';
 import { Model } from 'sequelize-typescript';
 import { SequelizeConfig } from 'src/core';
+
+interface HasMedia {
+  getModelName(): string;
+  getModelPrimaryKey(): number;
+  registerMediaCollections(): void;
+  getCollectionMetadata(): Record<string, MediaCollectionRepository>;
+}
 
 export class MediaCollectionRepository {
   constructor(

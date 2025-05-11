@@ -1,5 +1,5 @@
 import { PaginatedResponse } from 'src/core';
-import { UsersPasswordReset } from '../entities';
+import { UsersPasswordReset } from '../../users-password-reset/entities';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class PaginatedUsersPasswordResetDto extends PaginatedResponse<UsersPasswordReset> {

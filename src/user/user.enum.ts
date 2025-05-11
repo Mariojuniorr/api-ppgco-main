@@ -5,3 +5,7 @@ export enum Permissions {
   Update = 'user.update',
   Delete = 'user.delete',
 }
+
+export enum EVENTS {
+  avatarUpload = 'avatar.upload',
+}

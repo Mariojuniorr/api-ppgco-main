@@ -41,7 +41,7 @@ export class PpgcoBucketService implements IBucketService {
     });
 
     return this.bucketApi.attempt(() =>
-      this.bucketApi.http.post(url, bucketConfig),
+      this.bucketApi.http.post(url, bucketConfig)
     );
   }
 

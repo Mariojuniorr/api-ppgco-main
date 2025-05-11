@@ -6,21 +6,20 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { Sequelize } from 'sequelize-typescript';
 import {
   Attributes,
+  CreationAttributes,
   CreateOptions as SequelizeCreateOptions,
   Transaction,
 } from 'sequelize';
 
 import bcrypt from 'bcryptjs';
-import _map from 'lodash/map';
 import _omit from 'lodash/omit';
 
 import { CommonService, Filters, OrderDto } from 'src/core';
 import { MailerService } from 'src/mailer';
 import { generateToken } from 'src/utils';
-import { Role, RolesService } from 'src/roles';
+import { RolesService } from 'src/roles';
 import { ActivationsService } from 'src/activations';
 import { UserHasRolesService } from 'src/user-has-roles';
 import { USER_REPOSITORY } from './user.constants';
@@ -28,7 +27,8 @@ import { CreateUserDto, UpdateUserDto } from './dto';
 import { awaitAll, PromisePusherCallback } from 'src/utils';
 import { User } from './entities/user.entity';
 import { forgotPasswordTemplate, emailVerificationTemplate } from './templates';
-import { Media, MediaService } from 'src/media';
+import { MediaService } from 'src/media';
+import { Sequelize } from 'sequelize-typescript';
 
 interface CreateOptions extends SequelizeCreateOptions<Attributes<User>> {
   mailData?: string;
@@ -53,7 +53,10 @@ export class UserService extends CommonService<User, typeof User> {
     super(model);
   }
 
-  public async create(dto: CreateUserDto, options?: CreateOptions) {
+  public async create(
+    dto: InstanceType<typeof CreateUserDto>,
+    options?: CreateOptions,
+  ) {
     const { email, password, roles: roleNames, ...createUserDto } = dto;
     const { files, mailData, ...sequelizeOptions } = options ?? {};
 
@@ -61,15 +64,17 @@ export class UserService extends CommonService<User, typeof User> {
       throw new UnauthorizedException('This email has already been registered');
     }
 
-    const createUser = async (transaction: Transaction) => {
+    const createUserFunction = async (transaction: Transaction) => {
       const user = await this.model.create(
         {
           ...createUserDto,
-          activated: 0,
-          forbidden: 0,
+          birth_date: new Date(),
+          activated: false,
+          forbidden: false,
           email,
           password: bcrypt.hashSync(password, PASSWORD_PADDING),
-        },
+          avatarBuffer: files?.avatar,
+        } as CreationAttributes<User>,
         { ...sequelizeOptions, transaction },
       );
 
@@ -77,19 +82,15 @@ export class UserService extends CommonService<User, typeof User> {
 
       await awaitAll((add: PromisePusherCallback) => {
         add(this.userHasRolesService.addRoleToUser(user, roles, transaction));
-
-        if (files) {
-          add(this.setUserAvatar(user, files));
-        }
       });
 
       return user;
     };
 
     const user = options?.transaction
-      ? await createUser(options.transaction)
+      ? await createUserFunction(options.transaction)
       : await this.sequelize.transaction(async (transaction) => {
-          return createUser(transaction);
+          return createUserFunction(transaction);
         });
 
     if (mailData) {
@@ -99,37 +100,38 @@ export class UserService extends CommonService<User, typeof User> {
     return user;
   }
 
-  public async setUserMedias(
-    user: User,
-    filesCollections: Record<string, Express.Multer.File[]>,
-  ) {
-    const promises = _map(filesCollections, (files, collectionName) => {
-      return this.setUserMediaCollection(user, files[0], collectionName);
-    });
-  }
+  // public async setUserMedias(
+  //   user: User,
+  //   filesCollections: Record<string, Express.Multer.File[]>,
+  // ) {
+  //   const promises = _map(filesCollections, (files, collectionName) => {
+  //     return this.setUserMediaCollection(user, files[0], collectionName);
+  //   });
+  // }
 
-  async setUserMediaCollection(
-    user: User,
-    file: Express.Multer.File,
-    collectionName: string,
-    transaction?: Transaction,
-  ): Promise<Media> {
-    const mediaRef = user[collectionName + 'Ref'];
+  // async setUserMediaCollection(
+  //   user: User,
+  //   file: Express.Multer.File,
+  //   collectionName: string,
+  //   transaction?: Transaction,
+  // ): Promise<Media> {
+  //   const mediaRef = user[collectionName + 'Ref'];
 
-    if (mediaRef) {
-      await this.mediaService.deleteMedia(mediaRef.mediaId, transaction);
-    }
+  //   if (mediaRef) {
+  //     await this.mediaService.deleteMedia(mediaRef.mediaId, transaction);
+  //   }
 
-    return this.mediaService.creatFromMulterFile(
-      file,
-      {
-        model_id: user.id,
-        model_type: user.constructor.name,
-        collection_name: collectionName,
-      },
-      transaction,
-    );
-  }
+  //   return this.mediaService.creatFromMulterFile(
+  //     file,
+  //     {
+  //       model: user.constructor.name,
+  //       key: user.id,
+  //       collectionName: collectionName,
+  //     },
+  //     transaction,
+  //   );
+  // }
+
   public async find(
     page: number,
     perPage: number,
