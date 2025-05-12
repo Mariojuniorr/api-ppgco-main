@@ -10,8 +10,9 @@ import {
   Post,
   Query,
   UploadedFiles,
+  UseInterceptors,
 } from '@nestjs/common';
-import { Filters, OrderDto, ZodValidationPipe } from 'src/core';
+import { Dict, Filters, OrderDto, ZodValidationPipe } from 'src/core';
 import {
   UploadedMediaValidationPipe,
   UseMediaValidatorInterceptor,
@@ -26,6 +27,12 @@ import { COLLECTIONS } from './user.constants';
 import { Permissions } from './user.enum';
 import { DeleteSuccessResponse, UpdateSuccessResponse } from 'src/core/dto';
 import { ApiCreatedResponse, ApiOkResponse } from '@nestjs/swagger';
+import { AnyFilesInterceptor } from '@nestjs/platform-express';
+import {
+  FileCollectionsInterceptor,
+  FileCollectionValidationInterceptor,
+  UploadedFileCollections,
+} from 'src/files';
 
 @Controller('users')
 export class UserController {
@@ -33,27 +40,27 @@ export class UserController {
 
   @Post('upload-file')
   @Can(Permissions.Create)
-  @UseMediaValidatorInterceptor(COLLECTIONS)
+  @FileCollectionsInterceptor(COLLECTIONS)
   @ApiCreatedResponse({ type: User })
   uploadFileAndPassValidation(
-    @CurrentUser() user: User,
-    @UploadedFiles(UploadedMediaValidationPipe(COLLECTIONS))
-    files: Record<string, Express.Multer.File[]>,
+    @CurrentUser() _user: User,
+    @UploadedFileCollections() files: Dict<Array<Express.Multer.File>>,
   ) {
     if (!files) {
       throw new BadRequestException('No files sent');
     }
-    return user.saveFiles(files);
+
+    console.log({ files }); // TODO: fix me
+    // return user.saveFiles(files);
   }
 
   @Post()
   @Can(Permissions.Create)
-  @UseMediaValidatorInterceptor(COLLECTIONS)
+  @FileCollectionsInterceptor(COLLECTIONS)
   @ApiCreatedResponse({ type: User })
   createUser(
     @Body(new ZodValidationPipe(createUserSchema)) createUserDto: any,
-    @UploadedFiles(UploadedMediaValidationPipe(COLLECTIONS))
-    files?: Record<string, Express.Multer.File[]>,
+    @UploadedFileCollections() files: Dict<Array<Express.Multer.File>>,
   ) {
     const password =
       createUserDto.password === 'generate_default'
@@ -65,9 +72,9 @@ export class UserController {
         ? `Sua senha é <b>${password}</b>. Altere sua senha no primeiro acesso.<br />`
         : undefined;
 
-    const dto = { ...createUserDto, password };
+    const creationDto = { ...createUserDto, password };
 
-    return this.userService.create(dto, { files, mailData });
+    return this.userService.create(creationDto, { files, mailData });
   }
 
   @Get()
@@ -96,15 +103,20 @@ export class UserController {
   @Can(Permissions.Read)
   @ApiOkResponse({ type: User })
   public async findOne(@Param('id') id: string[]) {
+    console.log({ id });
     const user = await this.userService.findOneWithoutSensiteData(+id);
 
     if (!user) {
       throw new NotFoundException('User not found');
     }
 
-    const avatar = await user.getAvatarUrl();
+    // const avatar = await user.getAvatarUrl();
+    // TODO: fix this
+    const avatar = undefined;
 
-    return { ...user, avatar };
+    console.log({ avatar });
+
+    return { ...user.dataValues, avatar };
   }
 
   @Patch(':id')

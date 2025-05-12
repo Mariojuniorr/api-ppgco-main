@@ -9,6 +9,7 @@ import {
   DefaultScope,
   DeletedAt,
   HasMany,
+  Model,
   Scopes,
   Table,
   UpdatedAt,
@@ -71,7 +72,7 @@ interface constructor<T> {
   },
 }))
 @Table({ tableName: 'users' })
-export class User extends ModelWithMedia {
+export class User extends Model {
   @Column
   first_name: string;
 
@@ -124,9 +125,9 @@ export class User extends ModelWithMedia {
   @HasMany(() => UserHasRole)
   userHasRole: UserHasRole;
 
-  @ApiProperty({})
-  @Column(DataTypes.VIRTUAL)
-  avatar: string;
+  // @ApiProperty({})
+  // @Column(DataTypes.VIRTUAL)
+  // avatar: string;
 
   // @AfterFind
   // public static formatFones(instance: User) {
@@ -142,18 +143,18 @@ export class User extends ModelWithMedia {
     );
   }
 
-  public registerMediaCollections(): void {
-    this.mediaCollection.addMediaCollection('avatar');
-  }
+  // public registerMediaCollections(): void {
+  //   this.mediaCollection.addMediaCollection('avatar');
+  // }
 
-  public async getAvatar() {
-    const medias = await this.getMedias('avatar');
-    return medias[0];
-  }
+  // public async getAvatar() {
+  //   const medias = await this.getMedias('avatar');
+  //   return medias[0];
+  // }
 
-  public async getAvatarUrl() {
-    return _first(await this.getMediaUrl('avatar'));
-  }
+  // public async getAvatarUrl() {
+  //   return _first(await this.getMediaUrl('avatar'));
+  // }
 
   public is(...roleNames: string[]) {
     const counterRoles = (accum: number, role: Role) => {

@@ -1,7 +1,8 @@
 import { Logger, Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { SequelizeModule } from '@nestjs/sequelize';
-import { JwtModule } from '@nestjs/jwt';
+import { JwtModule as NestJwtModule } from '@nestjs/jwt';
+import { EventEmitterModule } from '@nestjs/event-emitter';
 import { AuthService, AuthController, AuthModule } from './auth';
 import { UserModule } from './user';
 import { CrudGeneratorModule, crudGeneratorCommands } from './crud-generator';
@@ -38,6 +39,8 @@ import { Dialect } from 'sequelize';
 import { DB } from './app.constants';
 import { isProduction } from './utils';
 import { entities } from './app.entities';
+import { JwtModule } from './jwt';
+import { FilesModule } from './files/files.module';
 // {MODULE_IMPORT} Don't delete me, I'm used for automatic code generation
 
 @Module({
@@ -59,7 +62,8 @@ import { entities } from './app.entities';
       }),
       inject: [ConfigService],
     }),
-    JwtModule.register({
+    EventEmitterModule.forRoot(),
+    NestJwtModule.register({
       global: true,
       secret: process.env.JWT_SECRET_KEY,
     }),
@@ -95,6 +99,8 @@ import { entities } from './app.entities';
     PublicationCoauthorsModule,
     UsersPasswordResetModule,
     CoversModule,
+    JwtModule,
+    FilesModule,
     // {MODULE} Don't delete me, I'm used for automatic code generation
   ],
   controllers: [AuthController],

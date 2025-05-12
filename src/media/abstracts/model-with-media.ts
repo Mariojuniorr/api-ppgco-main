@@ -45,6 +45,7 @@ export abstract class ModelWithMedia extends Model implements HasMedia {
   }
 
   public async saveFiles(files: Record<string, Express.Multer.File[]>) {
+    console.log({ files });
     return new Promise<Media[]>(async (resolve, reject) => {
       const [firstUpload, ...uploadedFiles] = _flatMap(files, (items) => items);
 

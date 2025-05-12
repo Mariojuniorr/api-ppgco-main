@@ -4,20 +4,13 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { JwtService } from '@nestjs/jwt';
 import bcrypt from 'bcryptjs';
 import _map from 'lodash/map';
 import _pick from 'lodash/pick';
 
+import { JwtService, TokenType } from 'src/jwt';
 import { Permission, PermissionsService } from 'src/permissions';
 import { User, UserService } from 'src/user';
-import { UsersPasswordResetService } from 'src/users-password-reset';
-
-type TokenType = {
-  _id: number;
-  email: string;
-  name: string;
-};
 
 export type DecodedToken = {
   _id: number;
@@ -33,7 +26,7 @@ export class AuthService {
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
     private readonly permissionService: PermissionsService,
-  ) { }
+  ) {}
 
   public async signIn(email: string, password: string): Promise<any> {
     const user = (await this.usersService.findByEmail(email)) as User & {
@@ -69,15 +62,8 @@ export class AuthService {
       name: user.full_name,
     };
 
-    const accessToken = await this.jwtService.signAsync(payload, {
-      expiresIn: '4h',
-      secret: this.configService.get<string>('JWT_SECRET_KEY'),
-    });
-
-    const refreshToken = await this.jwtService.signAsync(payload, {
-      expiresIn: '24h',
-      secret: this.configService.get<string>('JWT_REFRESH_SECRET_KEY'),
-    });
+    const accessToken = await this.jwtService.generateToken(payload);
+    const refreshToken = await this.jwtService.generateRefreshToken(payload);
 
     this.usersService.setLastLogin(user);
 
@@ -126,9 +112,7 @@ export class AuthService {
       refresh: this.configService.get<string>('JWT_REFRESH_SECRET_KEY'),
     };
 
-    const payload = await this.jwtService.verifyAsync<TokenType>(token, {
-      secret: secretKeys.refresh,
-    });
+    const payload = await this.jwtService.decodeToken(token);
 
     const newPayload = _pick(payload, ['_id', 'email', 'name']);
 
@@ -136,15 +120,8 @@ export class AuthService {
       throw new ForbiddenException();
     }
 
-    const accessToken = await this.jwtService.signAsync(newPayload, {
-      expiresIn: '4h',
-      secret: secretKeys.access,
-    });
-
-    const refreshToken = await this.jwtService.signAsync(newPayload, {
-      expiresIn: '4h',
-      secret: secretKeys.access,
-    });
+    const accessToken = await this.jwtService.generateToken(newPayload);
+    const refreshToken = await this.jwtService.generateRefreshToken(newPayload);
 
     return { auth: { accessToken, refreshToken } };
   }

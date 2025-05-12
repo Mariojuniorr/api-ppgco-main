@@ -51,8 +51,8 @@ export class UserService extends CommonService<User, typeof User> {
     super(model);
   }
 
-  public async create(dto: CreateUserDto, options?: CreateOptions) {
-    const { email, password, roles: roleNames, ...createUserDto } = dto;
+  public async create(creationDto: CreateUserDto, options?: CreateOptions) {
+    const { email, password, roles: roleNames, ...createUserDto } = creationDto;
     const { files, mailData, ...sequelizeOptions } = options ?? {};
 
     if (await this.findByEmail(email)) {
@@ -63,8 +63,8 @@ export class UserService extends CommonService<User, typeof User> {
       const user = await this.model.create(
         {
           ...createUserDto,
-          activated: 0,
-          forbidden: 0,
+          activated: false,
+          forbidden: false,
           email,
           password: bcrypt.hashSync(password, PASSWORD_PADDING),
         },
@@ -76,9 +76,10 @@ export class UserService extends CommonService<User, typeof User> {
       await awaitAll((add: PromisePusherCallback) => {
         add(this.userHasRolesService.addRoleToUser(user, roles, transaction));
 
-        if (files) {
-          add(user.saveFiles(files));
-        }
+        console.log({ files }); // TODO: Fix me
+        // if (files) {
+        //   add(user.saveFiles(files));
+        // }
       });
 
       return user;
@@ -133,7 +134,7 @@ export class UserService extends CommonService<User, typeof User> {
   }
 
   public async findOneWithoutSensiteData(id: number): Promise<User | null> {
-    return this.findOneScoped('findOneWithoutSensiteData', id);
+    return this.findOneScoped('withoutSensiveData', id);
   }
 
   public omitSensitiveData(user: User) {
