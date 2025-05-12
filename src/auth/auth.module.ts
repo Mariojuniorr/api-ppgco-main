@@ -4,10 +4,9 @@ import { AuthService } from './auth.service';
 import { UserModule } from 'src/user/user.module';
 import { authProviders } from './auth.providers';
 import { PermissionsModule } from 'src/permissions';
-import { JwtModule } from 'src/jwt';
 
 @Module({
-  imports: [UserModule, PermissionsModule, JwtModule],
+  imports: [UserModule, PermissionsModule],
   controllers: [AuthController],
   providers: [AuthService, ...authProviders],
   exports: [AuthService],

@@ -3,6 +3,7 @@ import {
   AfterCreate,
   AfterFind,
   AfterSync,
+  AfterUpdate,
   BelongsToMany,
   Column,
   CreatedAt,
@@ -22,6 +23,7 @@ import _snakeCase from 'lodash/snakeCase';
 import { ModelWithMedia } from 'src/media';
 import { Role } from 'src/roles/entities';
 import { UserHasRole } from 'src/user-has-roles/entities';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 
 interface constructor<T> {
   new (...args: any[]): T;
@@ -73,6 +75,12 @@ interface constructor<T> {
 }))
 @Table({ tableName: 'users' })
 export class User extends Model {
+  // private static eventEmitter: EventEmitter2;
+
+  // static injectDependencies(eventEmitter: EventEmitter2) {
+  //   User.eventEmitter = eventEmitter;
+  // }
+
   @Column
   first_name: string;
 
@@ -165,4 +173,10 @@ export class User extends Model {
 
     return count === roleNames.length;
   }
+
+  // @AfterCreate
+  // @AfterUpdate
+  // static async emitUploadEvent(instance: User) {
+  //   User.eventEmitter.emit(EVENTS.avatarUpload, instance);
+  // }
 }

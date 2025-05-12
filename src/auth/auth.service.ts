@@ -22,16 +22,14 @@ export type DecodedToken = {
 @Injectable()
 export class AuthService {
   public constructor(
-    private readonly usersService: UserService,
     private readonly jwtService: JwtService,
+    private readonly usersService: UserService,
     private readonly configService: ConfigService,
     private readonly permissionService: PermissionsService,
   ) {}
 
   public async signIn(email: string, password: string): Promise<any> {
-    const user = (await this.usersService.findByEmail(email)) as User & {
-      getPermissions: () => Promise<Permission[]>;
-    };
+    const user = await this.usersService.findByEmail(email);
 
     if (!user) {
       throw new ForbiddenException();

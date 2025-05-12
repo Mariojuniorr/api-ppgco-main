@@ -24,7 +24,6 @@ import { UserHasPermission } from 'src/user-has-permissions/entities';
 import { UserHasRole } from 'src/user-has-roles/entities';
 import { UsersPasswordReset } from 'src/users-password-reset/entities';
 import { Document } from 'src/documents/entities';
-// {MODEL_IMPORT} Don't delete me, I'm used for automatic code generation
 
 export const entities = {
   tables: [
@@ -55,7 +54,6 @@ export const entities = {
     NotificationUsers,
     PublicationCoauthor,
     UsersPasswordReset,
-    // {MODELS} Don't delete me, I'm used for automatic code generation
   ],
   views: [VMilestone, VSubject, VPublication, VStudent, VAdvisor],
 };
