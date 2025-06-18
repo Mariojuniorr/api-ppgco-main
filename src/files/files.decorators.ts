@@ -5,9 +5,10 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { AnyFilesInterceptor } from '@nestjs/platform-express';
-import { FileValidationRule, UploadedFile } from './validators';
+import { FileValidationRule } from './validators';
 import { Dict } from 'src/core';
 import { FileCollectionValidationInterceptor } from './files.interceptor';
+import { UploadedFile } from './files.types';
 
 export const UploadedFileCollections = createParamDecorator(
   (data: unknown, ctx: ExecutionContext) => {

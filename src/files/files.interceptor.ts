@@ -7,12 +7,10 @@ import {
   HttpException,
 } from '@nestjs/common';
 import { Observable, map } from 'rxjs';
-import {
-  FileValidationRule,
-  UploadedFile,
-} from './validators/validators.interfaces';
+import { FileValidationRule } from './validators';
 import _groupBy from 'lodash/groupBy';
 import { FileValidationFactory } from './factories';
+import { UploadedFile } from './files.types';
 
 @Injectable()
 export class FileCollectionValidationInterceptor implements NestInterceptor {
@@ -27,6 +25,8 @@ export class FileCollectionValidationInterceptor implements NestInterceptor {
     for (const fieldname in groupedFiles) {
       const filesArray = groupedFiles[fieldname];
       const rules = this.validationRules[fieldname];
+
+      console.log({ rules });
 
       if (rules) {
         this.validateFiles(filesArray, rules, fieldname);

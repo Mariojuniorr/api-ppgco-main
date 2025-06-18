@@ -1,32 +1,38 @@
-export enum Cover {
-  LOGIN = 'login_page_image',
-  RESET_PASSWORD = 'reset_password_page_image',
-  FORGOT_PASSWORD = 'forgot_password_page_image',
+export enum Covers {
+  LOGIN = 'login',
+  RESET_PASSWORD = 'reset_password',
+  REQUEST_RESET_PASSWORD = 'request_reset_password',
 }
 
-export const COLLECTIONS = {
-  covers: {
+export enum CoverKeys {
+  LOGIN = 'login_page_image',
+  RESET_PASSWORD = 'reset_password_page_image',
+  REQUEST_RESET_PASSWORD = 'request_reset_password_image',
+}
+
+export const LOGIN_COVER_COLLECTIONS = {
+  login: {
     maxSize: 100 * 1024 * 1024,
     maxCount: 2,
-    required: false,
+    required: true,
     accepteds: ['image/*'],
   },
-  login_cover: {
+};
+
+export const RESET_PASSWORD_COLLECTIONS = {
+  reset_password: {
     maxSize: 100 * 1024 * 1024,
     maxCount: 2,
-    required: false,
+    required: true,
     accepteds: ['image/*'],
   },
-  reset_password_cover: {
+};
+
+export const REQUEST_RESET_PASSWORD_COLLECTIONS = {
+  forgot_password: {
     maxSize: 100 * 1024 * 1024,
     maxCount: 2,
-    required: false,
-    accepteds: ['image/*'],
-  },
-  forgot_password_cover: {
-    maxSize: 100 * 1024 * 1024,
-    maxCount: 2,
-    required: false,
+    required: true,
     accepteds: ['image/*'],
   },
 };

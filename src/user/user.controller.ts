@@ -9,30 +9,26 @@ import {
   Patch,
   Post,
   Query,
-  UploadedFiles,
-  UseInterceptors,
 } from '@nestjs/common';
-import { Dict, Filters, OrderDto, ZodValidationPipe } from 'src/core';
+import { ApiCreatedResponse, ApiOkResponse } from '@nestjs/swagger';
 import {
-  UploadedMediaValidationPipe,
-  UseMediaValidatorInterceptor,
-} from 'src/media';
+  Dict,
+  Filters,
+  OrderDto,
+  ZodValidationPipe,
+  DeleteSuccessResponse,
+  UpdateSuccessResponse,
+} from 'src/core';
 import { Can } from 'src/permissions';
 import { randomString } from 'src/utils';
+import { FileCollectionsInterceptor, UploadedFileCollections } from 'src/files';
+import _omit from 'lodash/omit';
 import { UserService } from './user.service';
 import { User } from './entities';
 import { createUserSchema, UpdateUserDto, PaginatedUserDto } from './dto';
 import { CurrentUser } from './user.decorator';
 import { COLLECTIONS } from './user.constants';
 import { Permissions } from './user.enum';
-import { DeleteSuccessResponse, UpdateSuccessResponse } from 'src/core/dto';
-import { ApiCreatedResponse, ApiOkResponse } from '@nestjs/swagger';
-import { AnyFilesInterceptor } from '@nestjs/platform-express';
-import {
-  FileCollectionsInterceptor,
-  FileCollectionValidationInterceptor,
-  UploadedFileCollections,
-} from 'src/files';
 
 @Controller('users')
 export class UserController {
@@ -58,7 +54,7 @@ export class UserController {
   @Can(Permissions.Create)
   @FileCollectionsInterceptor(COLLECTIONS)
   @ApiCreatedResponse({ type: User })
-  createUser(
+  public async createUser(
     @Body(new ZodValidationPipe(createUserSchema)) createUserDto: any,
     @UploadedFileCollections() files: Dict<Array<Express.Multer.File>>,
   ) {
@@ -73,8 +69,12 @@ export class UserController {
         : undefined;
 
     const creationDto = { ...createUserDto, password };
+    const user = await this.userService.create(creationDto, {
+      files,
+      mailData,
+    });
 
-    return this.userService.create(creationDto, { files, mailData });
+    return _omit(user.dataValues, 'avatarBuffer', 'password');
   }
 
   @Get()
@@ -110,11 +110,7 @@ export class UserController {
       throw new NotFoundException('User not found');
     }
 
-    // const avatar = await user.getAvatarUrl();
-    // TODO: fix this
-    const avatar = undefined;
-
-    console.log({ avatar });
+    const avatar = user.avatar?.getUrl();
 
     return { ...user.dataValues, avatar };
   }

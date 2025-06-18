@@ -8,7 +8,7 @@ import bcrypt from 'bcryptjs';
 import _map from 'lodash/map';
 import _pick from 'lodash/pick';
 
-import { JwtService, TokenType } from 'src/jwt';
+import { JwtService } from 'src/jwt';
 import { Permission, PermissionsService } from 'src/permissions';
 import { User, UserService } from 'src/user';
 
@@ -110,7 +110,7 @@ export class AuthService {
       refresh: this.configService.get<string>('JWT_REFRESH_SECRET_KEY'),
     };
 
-    const payload = await this.jwtService.decodeToken(token);
+    const payload = await this.jwtService.decodeRefreshToken(token);
 
     const newPayload = _pick(payload, ['_id', 'email', 'name']);
 

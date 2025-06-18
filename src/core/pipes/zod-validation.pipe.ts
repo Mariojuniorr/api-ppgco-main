@@ -13,8 +13,6 @@ export class ZodValidationPipe implements PipeTransform {
         ?.map((error: any) => `${error.path.join('.')} - ${error.message}`)
         .join(', ');
 
-      console.log({ error, value, fieldsWithError });
-
       throw new BadRequestException(
         `O formulário apresenta um ou mais campos incorretos: ${fieldsWithError}`,
       );

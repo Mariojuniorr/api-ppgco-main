@@ -4,6 +4,7 @@ import { SystemApliance } from './entities';
 import { CreateSystemApliancesDto, UpdateSystemApliancesDto } from './dto';
 import { CommonListing, CommonService, OrderDto, Query } from 'src/core';
 import { Op } from 'sequelize';
+import { UploadedFile } from 'src/files';
 
 @Injectable()
 export class SystemApliancesService extends CommonService<
@@ -43,7 +44,11 @@ export class SystemApliancesService extends CommonService<
   }
 
   public set(sa_key: string, sa_value: string) {
-    return this.model.create({ sa_key, sa_value });
+    return this.model.upsert({ sa_key, sa_value });
+  }
+
+  public setFromFile(sa_key: string, covers: UploadedFile) {
+    return this.model.upsert({ sa_key, coverBuffer: covers });
   }
 
   public create(createSystemApliancesDto: CreateSystemApliancesDto) {

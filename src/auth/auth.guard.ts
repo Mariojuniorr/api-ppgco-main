@@ -8,10 +8,10 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { UserService } from 'src/user';
 import { IS_PUBLIC_KEY } from 'src/core';
+import { JwtService } from 'src/jwt';
 
 export type UserPayload = {
   _id: number;
@@ -44,10 +44,8 @@ export class AuthGuard implements CanActivate {
 
     try {
       const payload = await this.jwtService
-        .verifyAsync<UserPayload>(token, {
-          secret: this.configService.get<string>('JWT_SECRET_KEY'),
-        })
-        .catch(() => {
+        .decodeToken<UserPayload>(token)
+        .catch((e) => {
           throw new UnauthorizedException('Token expirado');
         });
 

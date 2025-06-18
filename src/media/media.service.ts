@@ -3,8 +3,8 @@ import _isEmpty from 'lodash/isEmpty';
 import _flatMap from 'lodash/flatMap';
 import { MEDIA_REPOSITORY } from './media.constants';
 import { Media } from './entities';
-import { CreateMediaDto, UpdateMediaDto } from './dto';
-import { HasMedia } from './abstracts';
+import { CreateMediaDto, CreateMediaFromModelDto, UpdateMediaDto } from './dto';
+import { Model } from 'sequelize-typescript';
 
 type MediaKeyAttributes =
   | { id: number }
@@ -17,13 +17,17 @@ export class MediaService {
     private readonly mediaModel: typeof Media,
   ) {}
 
+  public insertMediaIn(model: Model, creationDto: CreateMediaFromModelDto) {
+    return this.mediaModel.insertMediaIn(model, creationDto);
+  }
+
   public findOne(where: MediaKeyAttributes) {
     return this.mediaModel.findOne({ where });
   }
 
-  public create(createMediaDto: CreateMediaDto) {
-    return this.mediaModel.create({ ...createMediaDto });
-  }
+  // public create(createMediaDto: CreateMediaDto) {
+  //   return this.mediaModel.create({ ...createMediaDto });
+  // }
 
   private async ensureID(where: MediaKeyAttributes) {
     return new Promise<MediaKeyAttributes>((resolve, reject) => {
@@ -31,7 +35,11 @@ export class MediaService {
 
       this.findOne(where)
         .then((response) => {
-          resolve({ id: response?.dataValues.id });
+          if (!response) {
+            throw new Error('Media ID not found');
+          }
+
+          resolve({ id: response.dataValues.id });
         })
         .catch(reject);
     });
@@ -48,28 +56,5 @@ export class MediaService {
 
   public async remove(where: MediaKeyAttributes) {
     return this.mediaModel.destroy({ where: await this.ensureID(where) });
-  }
-
-  public async uploadFiles(
-    files: Record<string, Express.Multer.File[]>,
-    model: HasMedia,
-  ) {
-    return new Promise<Media | Media[]>(async (resolve, reject) => {
-      const [firstUpload, ...uploadedFiles] = _flatMap(files, (items) => items);
-
-      const resolveWhenIsUnique = (media: Media) => {
-        if (_isEmpty(uploadedFiles)) resolve(media);
-      };
-
-      await Media.fromMulterFile(firstUpload, model)
-        .then(resolveWhenIsUnique)
-        .catch(reject);
-
-      const storing = uploadedFiles.map((file) =>
-        Media.fromMulterFile(file, model),
-      );
-
-      return Promise.all(storing).then(resolve).catch(reject);
-    });
   }
 }

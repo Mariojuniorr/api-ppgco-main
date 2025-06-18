@@ -1,12 +1,14 @@
 import { Controller, Get, Post, UploadedFiles } from '@nestjs/common';
 import { ApiOkResponse } from '@nestjs/swagger';
+import { Dict, Public } from 'src/core';
+import { FileCollectionsInterceptor, UploadedFileCollections } from 'src/files';
 import {
-  UploadedMediaValidationPipe,
-  UseMediaValidatorInterceptor,
-} from 'src/media';
-import { Public } from 'src/core';
+  Covers,
+  LOGIN_COVER_COLLECTIONS,
+  REQUEST_RESET_PASSWORD_COLLECTIONS,
+  RESET_PASSWORD_COLLECTIONS,
+} from './covers.constants';
 import { CoversService } from './covers.service';
-import { COLLECTIONS } from './covers.constants';
 
 @Controller('covers')
 export class CoversController {
@@ -19,7 +21,7 @@ export class CoversController {
     type: String,
   })
   public getLoginCover() {
-    return this.coversService.getLoginCover();
+    return this.coversService.getCover(Covers.LOGIN);
   }
 
   @Public()
@@ -29,7 +31,7 @@ export class CoversController {
     type: String,
   })
   public getResetPasswordCover() {
-    return this.coversService.getResetPasswordCover();
+    return this.coversService.getCover(Covers.RESET_PASSWORD);
   }
 
   @Public()
@@ -39,7 +41,7 @@ export class CoversController {
     type: String,
   })
   public getForgotPasswordCover() {
-    return this.coversService.getForgotPasswordCover();
+    return this.coversService.getCover(Covers.REQUEST_RESET_PASSWORD);
   }
 
   @Public()
@@ -48,13 +50,13 @@ export class CoversController {
     description: `This endpoint is used to get login cover image`,
     type: String,
   })
-  @UseMediaValidatorInterceptor(COLLECTIONS)
+  @FileCollectionsInterceptor(LOGIN_COVER_COLLECTIONS)
   public postLoginCover(
-    @UploadedFiles(UploadedMediaValidationPipe(COLLECTIONS))
-    files: Record<string, Express.Multer.File[]>,
+    @UploadedFileCollections()
+    files: Dict<Array<Express.Multer.File>>,
   ) {
     console.log({ files });
-    return this.coversService.setLoginCover(files);
+    return this.coversService.setCover(Covers.LOGIN, files);
   }
 
   @Public()
@@ -63,12 +65,12 @@ export class CoversController {
     description: `This endpoint is used to get reset password cover image`,
     type: String,
   })
-  @UseMediaValidatorInterceptor(COLLECTIONS)
+  @FileCollectionsInterceptor(RESET_PASSWORD_COLLECTIONS)
   public postResetPasswordCover(
-    @UploadedFiles(UploadedMediaValidationPipe(COLLECTIONS))
-    files: Record<string, Express.Multer.File[]>,
+    @UploadedFileCollections()
+    files: Dict<Array<Express.Multer.File>>,
   ) {
-    return this.coversService.setResetPasswordCover(files);
+    return this.coversService.setCover(Covers.RESET_PASSWORD, files);
   }
 
   @Public()
@@ -77,11 +79,11 @@ export class CoversController {
     description: `This endpoint is used to get forgot password cover image`,
     type: String,
   })
-  @UseMediaValidatorInterceptor(COLLECTIONS)
+  @FileCollectionsInterceptor(REQUEST_RESET_PASSWORD_COLLECTIONS)
   public postForgotPasswordCover(
-    @UploadedFiles(UploadedMediaValidationPipe(COLLECTIONS))
-    files: Record<string, Express.Multer.File[]>,
+    @UploadedFileCollections()
+    files: Dict<Array<Express.Multer.File>>,
   ) {
-    return this.coversService.setForgotPasswordCover(files);
+    return this.coversService.setCover(Covers.REQUEST_RESET_PASSWORD, files);
   }
 }

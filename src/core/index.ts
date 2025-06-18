@@ -6,6 +6,7 @@ export * from './utils';
 export * from './types';
 export * from './pipes';
 export * from './filters';
+export * from './storage';
 export * from './database';
 export * from './constants';
 export * from './factories';

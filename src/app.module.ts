@@ -36,11 +36,16 @@ import { JwtModule } from 'src/jwt';
 import { FilesModule } from 'src/files';
 import { EventManagerModule } from 'src/event-manager';
 import { DatabaseModule } from './database/database.module';
+import { LocalBucketModule } from './local-bucket/local-bucket.module';
+import { StorageModule } from './storage/storage.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
+    JwtModule,
     DatabaseModule,
+    LocalBucketModule,
+    StorageModule.forRoot(),
     UserModule,
     AuthModule,
     ProjectModule,
@@ -73,7 +78,6 @@ import { DatabaseModule } from './database/database.module';
     PublicationCoauthorsModule,
     UsersPasswordResetModule,
     CoversModule,
-    JwtModule,
     FilesModule,
     EventManagerModule,
   ],

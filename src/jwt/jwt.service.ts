@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtVerifyOptions, JwtService as NestJwtService } from '@nestjs/jwt';
+import { JWT } from './jwt.constants';
 import { TokenType } from './jwt.types';
 
 @Injectable()
@@ -12,20 +13,20 @@ export class JwtService {
 
   get expiration() {
     return {
-      access: this.configService.get<string>('JWT_EXPIRATION'),
-      refresh: this.configService.get<string>('JWT_REFRESH_EXPIRATION'),
+      access: this.configService.get<string>(JWT.EXPIRATION),
+      refresh: this.configService.get<string>(JWT.REFRESH_EXPIRATION),
     };
   }
 
   get secretKeys() {
     return {
-      access: this.configService.get<string>('JWT_SECRET_KEY'),
-      refresh: this.configService.get<string>('JWT_REFRESH_SECRET_KEY'),
+      access: this.configService.get<string>(JWT.SECRET_KEY),
+      refresh: this.configService.get<string>(JWT.REFRESH_SECRET_KEY),
     };
   }
 
   get jwtRefreshSecretKey() {
-    return this.configService.get<string>('JWT_REFRESH_SECRET_KEY');
+    return this.configService.get<string>(JWT.REFRESH_SECRET_KEY);
   }
 
   public async generateToken(payload: TokenType) {
@@ -42,8 +43,14 @@ export class JwtService {
     });
   }
 
-  public async decodeToken(token: string) {
-    return this.nestJwtService.verifyAsync<TokenType>(token, {
+  public async decodeToken<T extends object = TokenType>(token: string) {
+    return this.nestJwtService.verifyAsync<T>(token, {
+      secret: this.secretKeys.access,
+    });
+  }
+
+  public async decodeRefreshToken<T extends object = TokenType>(token: string) {
+    return this.nestJwtService.verifyAsync<T>(token, {
       secret: this.secretKeys.refresh,
     });
   }

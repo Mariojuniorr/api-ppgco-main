@@ -10,6 +10,7 @@ import {
   DefaultScope,
   DeletedAt,
   HasMany,
+  HasOne,
   Model,
   Scopes,
   Table,
@@ -20,39 +21,14 @@ import _first from 'lodash/first';
 import _trimStart from 'lodash/trimStart';
 import _trimEnd from 'lodash/trimEnd';
 import _snakeCase from 'lodash/snakeCase';
-import { ModelWithMedia } from 'src/media';
 import { Role } from 'src/roles/entities';
 import { UserHasRole } from 'src/user-has-roles/entities';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-
-interface constructor<T> {
-  new (...args: any[]): T;
-}
-
-// function setCustomAttributes<T>(instance: T, ModelClass: constructor<T>) {
-//   function findGetAttributeMethods(instance: T) {
-//     return Object.getOwnPropertyNames(instance).filter((name) => {
-//       return (
-//         typeof instance[name] === 'function' && /^get.*Attribute$/.test(name)
-//       );
-//     });
-//   }
-
-//   const methodNames = findGetAttributeMethods(instance);
-//   const attributeNames = methodNames.map((name) =>
-//     _snakeCase(_trimEnd(_trimStart(name, 'get'), 'Attribute')),
-//   );
-
-//   console.log({
-//     properties: Object.getOwnPropertyNames(instance),
-//     methodNames,
-//     attributeNames,
-//   });
-
-//   attributeNames.forEach((attributeName, index) => {
-//     ModelClass.prototype[attributeName] = methodNames[index];
-//   });
-// }
+import { Events } from '../user.enum';
+import { UploadedFile } from 'src/files';
+import { EventManagerService } from 'src/event-manager';
+import { AvatarUploadEvent, FileUploadEvent } from '../events';
+import { Media } from 'src/media';
 
 @Scopes(() => ({
   full: {
@@ -73,13 +49,18 @@ interface constructor<T> {
     },
   },
 }))
+@DefaultScope(() => ({
+  attributes: {
+    exclude: ['password'],
+  },
+}))
 @Table({ tableName: 'users' })
 export class User extends Model {
-  // private static eventEmitter: EventEmitter2;
+  private static eventEmitter: EventManagerService;
 
-  // static injectDependencies(eventEmitter: EventEmitter2) {
-  //   User.eventEmitter = eventEmitter;
-  // }
+  static injectDependencies(eventEmitter: EventManagerService) {
+    User.eventEmitter = eventEmitter;
+  }
 
   @Column
   first_name: string;
@@ -133,9 +114,20 @@ export class User extends Model {
   @HasMany(() => UserHasRole)
   userHasRole: UserHasRole;
 
-  // @ApiProperty({})
-  // @Column(DataTypes.VIRTUAL)
-  // avatar: string;
+  @Column(DataTypes.VIRTUAL)
+  avatarBuffer: UploadedFile;
+
+  @Column(DataTypes.VIRTUAL)
+  avatar: Media | null;
+
+  @AfterFind
+  public static async getAvatar(instance: User) {
+    if (!instance) return;
+
+    instance.avatar = await Media.findFromModel(instance, {
+      order: [['id', 'desc']],
+    });
+  }
 
   // @AfterFind
   // public static formatFones(instance: User) {
@@ -151,19 +143,6 @@ export class User extends Model {
     );
   }
 
-  // public registerMediaCollections(): void {
-  //   this.mediaCollection.addMediaCollection('avatar');
-  // }
-
-  // public async getAvatar() {
-  //   const medias = await this.getMedias('avatar');
-  //   return medias[0];
-  // }
-
-  // public async getAvatarUrl() {
-  //   return _first(await this.getMediaUrl('avatar'));
-  // }
-
   public is(...roleNames: string[]) {
     const counterRoles = (accum: number, role: Role) => {
       return accum + +roleNames.includes(role.dataValues.name);
@@ -174,9 +153,17 @@ export class User extends Model {
     return count === roleNames.length;
   }
 
-  // @AfterCreate
-  // @AfterUpdate
-  // static async emitUploadEvent(instance: User) {
-  //   User.eventEmitter.emit(EVENTS.avatarUpload, instance);
-  // }
+  static emitUploadedAvatar(event: AvatarUploadEvent) {
+    return User.eventEmitter.emit(Events.AVATAR_UPLOAD, event);
+  }
+
+  @AfterCreate
+  @AfterUpdate
+  static async emitUploadEvent(instance: User) {
+    if (instance.avatarBuffer) {
+      User.emitUploadedAvatar(
+        new AvatarUploadEvent(instance, instance.avatarBuffer),
+      );
+    }
+  }
 }

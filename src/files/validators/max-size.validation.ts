@@ -1,9 +1,9 @@
 import { BadRequestException } from '@nestjs/common';
 import {
   FileValidationRule,
-  UploadedFile,
   ValidationStrategy,
 } from './validators.interfaces';
+import { UploadedFile } from '../files.types';
 
 export class MaxSizeValidationStrategy implements ValidationStrategy {
   validate(files: UploadedFile[], rule: FileValidationRule): void {

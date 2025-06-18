@@ -1,8 +1,30 @@
-import { Column, CreatedAt, Table, UpdatedAt } from 'sequelize-typescript';
-import { ModelWithMedia } from 'src/media';
+import {
+  AfterCreate,
+  AfterUpdate,
+  AfterUpsert,
+  BeforeCreate,
+  BeforeUpdate,
+  BeforeUpsert,
+  Column,
+  CreatedAt,
+  DataType,
+  Model,
+  Table,
+  UpdatedAt,
+} from 'sequelize-typescript';
+import { UploadedFile } from 'src/files';
+import { EventManagerService } from 'src/event-manager';
+import { Events } from '../system-apliances.enum';
+import { CoverUploadEvent } from '../events';
 
 @Table({ tableName: 'system_apliances' })
-export class SystemApliance extends ModelWithMedia {
+export class SystemApliance extends Model {
+  private static eventEmitter: EventManagerService;
+
+  static injectDependencies(eventEmitter: EventManagerService) {
+    SystemApliance.eventEmitter = eventEmitter;
+  }
+
   @Column({ primaryKey: true, autoIncrement: true })
   id: number;
 
@@ -18,7 +40,22 @@ export class SystemApliance extends ModelWithMedia {
   @UpdatedAt
   updated_at: Date;
 
-  public registerMediaCollections(): void {
-    this.mediaCollection.addMediaCollection('covers');
+  @Column(DataType.VIRTUAL)
+  coverBuffer: UploadedFile;
+
+  static emitUploadedCover(event: CoverUploadEvent) {
+    return SystemApliance.eventEmitter.emit(Events.COVER_UPLOAD, event);
+  }
+
+  @AfterCreate
+  @AfterUpdate
+  @AfterUpsert
+  static async emitUploadEvent(instance: SystemApliance) {
+    if (instance.coverBuffer) {
+      console.log('emitting event');
+      SystemApliance.emitUploadedCover(
+        new CoverUploadEvent(instance, instance.coverBuffer),
+      );
+    }
   }
 }

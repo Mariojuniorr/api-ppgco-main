@@ -1,75 +1,41 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { SystemApliancesService } from 'src/system-apliances';
-import { Cover } from './covers.constants';
-import { MediaService } from 'src/media';
+import { CoverKeys, Covers } from './covers.constants';
+import { Dict } from 'src/core';
+import { UploadedFile } from 'src/files';
+import { StorageService } from 'src/storage';
+import _first from 'lodash/first';
+import { Media } from 'src/media';
 
 @Injectable()
 export class CoversService {
   constructor(
     private readonly systemApliancesService: SystemApliancesService,
+    private readonly storageService: StorageService,
   ) {}
 
-  public async getLoginCover() {
-    return this.systemApliancesService.findAplianceValue(Cover.LOGIN);
+  public async getCover(cover: Covers) {
+    return this.systemApliancesService.findAplianceValue(cover);
   }
 
-  public async getResetPasswordCover() {
-    return this.systemApliancesService.findAplianceValue(Cover.RESET_PASSWORD);
-  }
-
-  public async getForgotPasswordCover() {
-    return this.systemApliancesService.findAplianceValue(Cover.FORGOT_PASSWORD);
-  }
-
-  public async setLoginCover(files: Record<string, Express.Multer.File[]>) {
-    const apliance = await this.systemApliancesService.findApliance(
-      Cover.LOGIN,
-    );
+  public async setCover(cover: Covers, files: Dict<Array<UploadedFile>>) {
+    const coverKey = CoverKeys[cover.toUpperCase()];
+    const apliance = await this.systemApliancesService.findApliance(coverKey);
 
     if (!apliance) {
       throw new NotFoundException('Appliance not found');
     }
 
-    const filePath = await apliance
-      .saveFiles(files)
-      .then(([uploadedFiles]) => uploadedFiles.getUrl());
+    const collection = _first(files[cover]);
 
-    return this.systemApliancesService.set(Cover.LOGIN, filePath);
-  }
-
-  public async setResetPasswordCover(
-    files: Record<string, Express.Multer.File[]>,
-  ) {
-    const apliance = await this.systemApliancesService.findApliance(
-      Cover.RESET_PASSWORD,
-    );
-
-    if (!apliance) {
-      throw new NotFoundException('Appliance not found');
+    if (!collection) {
+      throw new BadRequestException('Cover not sent');
     }
 
-    const filePath = await apliance
-      .saveFiles(files)
-      .then(([uploadedFiles]) => uploadedFiles.getUrl());
-
-    return this.systemApliancesService.set(Cover.RESET_PASSWORD, filePath);
-  }
-
-  public async setForgotPasswordCover(
-    files: Record<string, Express.Multer.File[]>,
-  ) {
-    const apliance = await this.systemApliancesService.findApliance(
-      Cover.FORGOT_PASSWORD,
-    );
-
-    if (!apliance) {
-      throw new NotFoundException('Appliance not found');
-    }
-
-    const filePath = await apliance
-      .saveFiles(files)
-      .then(([uploadedFiles]) => uploadedFiles.getUrl());
-
-    return this.systemApliancesService.set(Cover.FORGOT_PASSWORD, filePath);
+    return this.systemApliancesService.setFromFile(coverKey, collection);
   }
 }

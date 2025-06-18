@@ -1,8 +1,5 @@
-import {
-  FileValidationRule,
-  UploadedFile,
-  ValidationStrategy,
-} from '../validators';
+import { UploadedFile } from '../files.types';
+import { FileValidationRule, ValidationStrategy } from '../validators';
 
 export class FileValidation implements ValidationStrategy {
   private strategies: ValidationStrategy[] = [];

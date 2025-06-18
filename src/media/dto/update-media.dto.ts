@@ -8,7 +8,7 @@ export const updateMediaSchema = z.object({
   uuid: z.string().max(36).optional(),
   collection_name: z.string().max(255),
   name: z.string().max(255),
-  file_name: z.string().max(255),
+  filename: z.string().max(255),
   mime_type: z.string().max(255).optional(),
   disk: z.string().max(255),
   conversions_disk: z.string().max(255).optional(),
@@ -37,7 +37,7 @@ export class UpdateMediaDto {
   name: string;
 
   @ApiProperty({ required: true })
-  file_name: string;
+  filename: string;
 
   @ApiProperty()
   mime_type: string;

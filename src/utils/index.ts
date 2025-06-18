@@ -12,3 +12,6 @@ export * from './generateUUID';
 export * from './token';
 export * from './promises';
 export * from './environment';
+export * from './crypt';
+export * from './objects';
+export * from './http';

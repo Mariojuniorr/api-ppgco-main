@@ -1,4 +1,4 @@
-export type UploadedFile = Express.Multer.File;
+import { UploadedFile } from '../files.types';
 
 export interface FileValidationRule {
   required?: boolean;

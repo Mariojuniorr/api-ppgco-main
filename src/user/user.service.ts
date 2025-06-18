@@ -29,6 +29,11 @@ import { awaitAll, PromisePusherCallback } from 'src/utils';
 import { User } from './entities/user.entity';
 import { forgotPasswordTemplate, emailVerificationTemplate } from './templates';
 import { EventManagerService } from 'src/event-manager';
+import { StorageService } from 'src/storage';
+import { LocalBucketService } from 'src/local-bucket';
+import { FileUploadEvent } from './events';
+import { Events } from './user.enum';
+import { MediaService } from 'src/media';
 
 interface CreateOptions extends SequelizeCreateOptions<Attributes<User>> {
   mailData?: string;
@@ -48,7 +53,6 @@ export class UserService extends CommonService<User, typeof User> {
     private readonly userHasRolesService: UserHasRolesService,
     private readonly activationsService: ActivationsService,
     private readonly usersPasswordResetService: UsersPasswordResetService,
-    private readonly eventManagerService: EventManagerService,
   ) {
     super(model);
   }
@@ -67,6 +71,7 @@ export class UserService extends CommonService<User, typeof User> {
           ...createUserDto,
           activated: false,
           forbidden: false,
+          avatarBuffer: files?.avatar?.[0],
           email,
           password: bcrypt.hashSync(password, PASSWORD_PADDING),
         },
@@ -85,13 +90,6 @@ export class UserService extends CommonService<User, typeof User> {
       : await this.sequelize.transaction(async (transaction) => {
           return createUser(transaction);
         });
-
-    if (files) {
-      this.eventManagerService.emit('user.file.upload', {
-        user,
-        files,
-      });
-    }
 
     if (mailData) {
       this.sendEmailVerification(user, mailData ?? '');
