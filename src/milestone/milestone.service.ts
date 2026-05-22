@@ -78,7 +78,7 @@ export class MilestoneService extends CommonService<
       additionalData,
     );
 
-    if (documents) {
+    if (documents && documents.length > 0 && milestoneDto.need_document) {
       await this.milestoneDocumentService.bulkCreate(
         milestones.flatMap((milestone: Milestone) =>
           documents.map(
@@ -109,7 +109,7 @@ export class MilestoneService extends CommonService<
       additionalData,
     );
 
-    if (documents) {
+    if (documents && documents.length > 0 && milestoneDto.need_document) {
       await this.milestoneDocumentService.create(
         milestone.dataValues.id,
         documents,

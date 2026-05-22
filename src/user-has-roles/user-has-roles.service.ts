@@ -79,4 +79,8 @@ export class UserHasRolesService extends CommonService<
   public remove(role_id: number) {
     return this.model.destroy({ where: { role_id } });
   }
+
+  public async removeAllRolesFromUser(userId: number, transaction?: Transaction) {
+    return this.model.destroy({ where: { user_id: userId }, transaction });
+  }
 }

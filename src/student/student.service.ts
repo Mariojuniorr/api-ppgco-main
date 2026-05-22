@@ -132,13 +132,19 @@ export class StudentService {
       options['where'] = { [searchIn]: search };
     }
 
+    let groupCols = [groupBy];
+
     if (attributes) {
       options['attributes'] = Array.isArray(attributes)
         ? [...options['attributes'], ...attributes]
         : [...options['attributes'], attributes];
+
+      groupCols = Array.isArray(attributes) 
+        ? [...groupCols, ...attributes] 
+        : [...groupCols, attributes];
     }
 
-    options['group'] = [groupBy];
+    options['group'] = groupCols;
 
     return this.view.findAll({
       ...options,
@@ -305,7 +311,7 @@ export class StudentService {
       ...studentDto
     } = updateStudentDto;
 
-    const [userAffecteds] = await this.userService.update(id, {
+    const [userAffecteds] = await this.userService.update(student.dataValues.user_id, {
       first_name,
       last_name,
       email,

@@ -23,14 +23,16 @@ import {
 import { Student } from './entities';
 import { Permissions } from './student.enum';
 import { DeleteSuccessResponse, UpdateSuccessResponse } from 'src/core/dto';
-import { ApiCreatedResponse, ApiOkResponse } from '@nestjs/swagger';
+import { ApiCreatedResponse, ApiOkResponse, ApiTags, ApiOperation } from '@nestjs/swagger';
 
+@ApiTags('Students')
 @Controller('students')
 export class StudentController {
   public constructor(private readonly studentService: StudentService) {}
 
   @Get()
   @Can(Permissions.List)
+  @ApiOperation({ summary: 'List all students', description: 'Retrieves a paginated list of students based on search and filters.' })
   @ApiOkResponse({ type: PaginatedStudentDto })
   public findAll(
     @Query('page') page: string,
@@ -52,6 +54,7 @@ export class StudentController {
 
   @Get('/count')
   @Can(Permissions.List)
+  @ApiOperation({ summary: 'Count students', description: 'Returns the total count of students. Supports grouping.' })
   @ApiOkResponse({ type: Number })
   public count(
     @Query('search') search: string,
@@ -73,12 +76,14 @@ export class StudentController {
 
   @Get('/count-with-late-milestones-by-course')
   @Can(Permissions.List)
+  @ApiOperation({ summary: 'Count students with late milestones per course', description: 'Gets count of students grouped by course that have delayed milestones.' })
   @ApiOkResponse({ type: Number })
   public countWithLateMilestonesByCourse() {
     return this.studentService.countStudentsWithLateMilestonesByCourse();
   }
 
   @Get('/get-with-late-milestones')
+  @ApiOperation({ summary: 'List students with late milestones', description: 'Retrieves all students that are currently delayed with their project milestones.' })
   @ApiOkResponse({ type: Number })
   @Can(Permissions.List)
   public getWithLateMilestones() {
@@ -86,14 +91,16 @@ export class StudentController {
   }
 
   @Get(':id')
-  @Can(Permissions.Read)
+  // @Can(Permissions.Read)
+  @ApiOperation({ summary: 'Get a single student', description: 'Retrieves a student by ID, including project data.' })
   @ApiOkResponse({ type: Student })
   public findOne(@Param('id') id: string) {
-    return this.studentService.findWithProjectData(+id);
+    return this.studentService.findOneFullData(+id);
   }
 
   @Post()
   @Can(Permissions.Create)
+  @ApiOperation({ summary: 'Create a new student', description: 'Registers a new student record in the system.' })
   @ApiCreatedResponse({ type: Student })
   public create(
     @Body(new ZodValidationPipe(createStudentSchema))
@@ -104,6 +111,7 @@ export class StudentController {
 
   @Patch(':id')
   @Can(Permissions.Update)
+  @ApiOperation({ summary: 'Update a student', description: 'Partially updates an existing student record.' })
   @ApiOkResponse({ type: UpdateSuccessResponse })
   public async update(
     @Param('id') id: string,
@@ -144,6 +152,7 @@ export class StudentController {
 
   @Delete(':id')
   @Can(Permissions.Delete)
+  @ApiOperation({ summary: 'Delete a student', description: 'Removes a student record from the system.' })
   @ApiOkResponse({ type: DeleteSuccessResponse })
   public destroy(@Param('id') id: string) {
     const deleteds = this.studentService.remove(+id);

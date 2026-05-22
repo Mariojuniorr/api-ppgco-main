@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, BadRequestException } from '@nestjs/common';
 import { Sequelize } from 'sequelize-typescript';
 import {
   col,
@@ -116,13 +116,19 @@ export class AdvisorService {
       options['where'] = { [searchIn]: search };
     }
 
+    let groupCols = [groupBy];
+
     if (attributes) {
       options['attributes'] = Array.isArray(attributes)
         ? [...options['attributes'], ...attributes]
         : [...options['attributes'], attributes];
+        
+      groupCols = Array.isArray(attributes) 
+        ? [...groupCols, ...attributes] 
+        : [...groupCols, attributes];
     }
 
-    options['group'] = [groupBy];
+    options['group'] = groupCols;
 
     return this.view.findAll({
       ...options,
@@ -157,45 +163,50 @@ export class AdvisorService {
     createAdvisorDto: CreateAdvisorDto,
     options?: CreateOptions,
   ) {
-    const { lattes, research_line_id, phone, ...advisorUserData } =
-      createAdvisorDto;
+    try {
+      const { lattes, research_line_id, phone, ...advisorUserData } =
+        createAdvisorDto;
 
-    const password = randomString(8);
-    const passwordMailMessage = `Sua senha é <b>${password}</b>. Altere sua senha no primeiro acesso.<br />`;
+      const password = randomString(8);
+      const passwordMailMessage = `Sua senha é <b>${password}</b>. Altere sua senha no primeiro acesso.<br />`;
 
-    const userData = {
-      password,
-      roles: [ROLES.Advisor],
-      phone: onlyNumbers(phone),
-      ...advisorUserData,
-    };
+      const userData = {
+        password,
+        roles: [ROLES.Advisor],
+        phone: onlyNumbers(phone),
+        ...advisorUserData,
+      };
 
-    const createAdvisor = async (transaction: Transaction) => {
-      const user = await this.userService.create(userData, {
-        transaction,
-      });
-
-      const advisor = await this.model.create(
-        {
-          id: user.dataValues.id,
-          lattes,
-          research_line_id,
-        },
-        { transaction },
-      );
-
-      this.userService.sendEmailVerification(user, passwordMailMessage);
-
-      return advisor;
-    };
-
-    const advisor = options?.transaction
-      ? await createAdvisor(options.transaction)
-      : await this.sequelize.transaction(async (transaction) => {
-          return createAdvisor(transaction);
+      const createAdvisor = async (transaction: Transaction) => {
+        const user = await this.userService.create(userData, {
+          transaction,
         });
 
-    return advisor;
+        const advisor = await this.model.create(
+          {
+            id: user.dataValues.id,
+            lattes,
+            research_line_id,
+          },
+          { transaction },
+        );
+
+        this.userService.sendEmailVerification(user, passwordMailMessage).catch(console.error);
+
+        return advisor;
+      };
+
+      const advisor = options?.transaction
+        ? await createAdvisor(options.transaction)
+        : await this.sequelize.transaction(async (transaction) => {
+            return createAdvisor(transaction);
+          });
+
+      return advisor;
+    } catch (error: any) {
+      console.error('ERROR CREATING ADVISOR:', error);
+      throw new BadRequestException(`[ADVISOR CREATE ERROR]: ${error.message || String(error)}`);
+    }
   }
 
   public async update(id: number, updateAdvisorDto: UpdateAdvisorDto) {

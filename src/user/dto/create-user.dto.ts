@@ -11,6 +11,7 @@ export const createUserSchema = z.object({
   password: z.string(),
   phone: z.string().optional(),
   roles: z.array(z.string()),
+  id_pessoa: z.number().optional(),
 });
 
 // export type CreateUserDto = z.infer<typeof createUserSchema>;

@@ -4,6 +4,7 @@ import {
   Injectable,
   NotFoundException,
   UnauthorizedException,
+  OnModuleInit,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Sequelize } from 'sequelize-typescript';
@@ -11,6 +12,7 @@ import {
   Attributes,
   CreateOptions as SequelizeCreateOptions,
   Transaction,
+  QueryTypes,
 } from 'sequelize';
 
 import bcrypt from 'bcryptjs';
@@ -37,7 +39,7 @@ interface CreateOptions extends SequelizeCreateOptions<Attributes<User>> {
 const PASSWORD_PADDING = 10;
 
 @Injectable()
-export class UserService extends CommonService<User, typeof User> {
+export class UserService extends CommonService<User, typeof User> implements OnModuleInit {
   public constructor(
     @Inject(USER_REPOSITORY) model: typeof User,
     private readonly sequelize: Sequelize,
@@ -49,6 +51,32 @@ export class UserService extends CommonService<User, typeof User> {
     private readonly usersPasswordResetService: UsersPasswordResetService,
   ) {
     super(model);
+  }
+
+  public async onModuleInit(): Promise<void> {
+    try {
+      // 1. Add id_pessoa column if it does not exist
+      await this.sequelize.query(`
+        DO $$
+        BEGIN
+            IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='id_pessoa') THEN
+                ALTER TABLE users ADD COLUMN id_pessoa BIGINT;
+            END IF;
+        END $$;
+      `);
+
+      // 2. Create unique index for id_pessoa (where not null)
+      await this.sequelize.query(`
+        CREATE UNIQUE INDEX IF NOT EXISTS users_id_pessoa_idx ON users (id_pessoa) WHERE id_pessoa IS NOT NULL;
+      `);
+
+      // 3. Create unique index for email
+      await this.sequelize.query(`
+        CREATE UNIQUE INDEX IF NOT EXISTS users_email_idx ON users (email);
+      `);
+    } catch (error) {
+      console.error('Error running migrations in UserService.onModuleInit', error);
+    }
   }
 
   public async create(dto: CreateUserDto, options?: CreateOptions) {
@@ -91,10 +119,14 @@ export class UserService extends CommonService<User, typeof User> {
         });
 
     if (mailData) {
-      this.sendEmailVerification(user, mailData ?? '');
+      this.sendEmailVerification(user, mailData ?? '').catch(console.error);
     }
 
     return user;
+  }
+
+  public async updateIdPessoa(userId: number, idPessoa: number): Promise<void> {
+    await this.model.update({ id_pessoa: idPessoa }, { where: { id: userId } });
   }
 
   public async find(
@@ -133,7 +165,7 @@ export class UserService extends CommonService<User, typeof User> {
   }
 
   public async findOneWithoutSensiteData(id: number): Promise<User | null> {
-    return this.findOneScoped('findOneWithoutSensiteData', id);
+    return this.model.scope(['withoutSensiveData', 'withRoles']).findOne({ where: { id } });
   }
 
   public omitSensitiveData(user: User) {
@@ -166,8 +198,127 @@ export class UserService extends CommonService<User, typeof User> {
     return this.model.scope('full').findOne({ where: { email } });
   }
 
+  public findByIdPessoa(idPessoa: number): Promise<User | null> {
+    return this.model.scope('full').findOne({ where: { id_pessoa: idPessoa } });
+  }
+
   public async update(id: number, updateUserDto: UpdateUserDto) {
-    return this.model.update(updateUserDto, { where: { id } });
+    const { lattesUrl, roles: roleNames, ...userFields } = updateUserDto;
+    
+    if (userFields.password) {
+      userFields.password = bcrypt.hashSync(userFields.password, PASSWORD_PADDING);
+    }
+
+    return this.sequelize.transaction(async (transaction) => {
+      const result = await this.model.update(userFields, { where: { id }, transaction });
+
+      if (roleNames !== undefined) {
+        await this.userHasRolesService.removeAllRolesFromUser(id, transaction);
+        const roles = await this.rolesService.findByNameList(roleNames);
+        const user = await this.findOne(id);
+        if (user && roles.length > 0) {
+          await this.userHasRolesService.addRoleToUser(user, roles, transaction);
+        }
+      }
+
+      if (lattesUrl !== undefined) {
+        console.log(`[UserService.update] Updating lattesUrl for user ID ${id} to: ${lattesUrl}`);
+        
+        const userWithRoles = await this.findOneWithRoles(id);
+        const roleNames = userWithRoles?.roles?.map((r) => r.name) || [];
+        const isStudent = roleNames.includes('Estudante');
+
+        console.log(`[UserService.update] User ID ${id} roles: ${roleNames.join(', ')} (isStudent=${isStudent})`);
+
+        if (isStudent) {
+          const studentExists = await this.sequelize.query(
+            `SELECT 1 FROM "student" WHERE user_id = :userId LIMIT 1`,
+            {
+              replacements: { userId: id },
+              type: QueryTypes.SELECT,
+              transaction,
+            }
+          );
+
+          if (studentExists && studentExists.length > 0) {
+            await this.sequelize.query(
+              `UPDATE "student" SET lattes = :lattesUrl, updated_at = NOW() WHERE user_id = :userId`,
+              {
+                replacements: { lattesUrl, userId: id },
+                transaction,
+              }
+            );
+          } else {
+            await this.sequelize.query(
+              `INSERT INTO "student" (user_id, lattes, registration, entry_date, created_at, updated_at) 
+               VALUES (:userId, :lattesUrl, 'SSO', NOW(), NOW(), NOW())`,
+              {
+                replacements: { lattesUrl, userId: id },
+                transaction,
+              }
+            );
+          }
+        } else {
+          const advisorExists = await this.sequelize.query(
+            `SELECT 1 FROM "advisor" WHERE id = :userId LIMIT 1`,
+            {
+              replacements: { userId: id },
+              type: QueryTypes.SELECT,
+              transaction,
+            }
+          );
+
+          if (advisorExists && advisorExists.length > 0) {
+            await this.sequelize.query(
+              `UPDATE "advisor" SET lattes = :lattesUrl, updated_at = NOW() WHERE id = :userId`,
+              {
+                replacements: { lattesUrl, userId: id },
+                transaction,
+              }
+            );
+          } else {
+            await this.sequelize.query(
+              `INSERT INTO "advisor" (id, lattes, created_at, updated_at) 
+               VALUES (:userId, :lattesUrl, NOW(), NOW())`,
+              {
+                replacements: { lattesUrl, userId: id },
+                transaction,
+              }
+            );
+          }
+        }
+      }
+
+      return result;
+    });
+  }
+
+  public async getLattesUrl(userId: number): Promise<string | null> {
+    const student = await this.sequelize.query(
+      `SELECT lattes FROM "student" WHERE user_id = :userId LIMIT 1`,
+      {
+        replacements: { userId },
+        type: QueryTypes.SELECT,
+      }
+    ) as Array<{ lattes: string }>;
+
+    if (student && student.length > 0) {
+      return student[0].lattes || null;
+    }
+
+    const advisor = await this.sequelize.query(
+      `SELECT lattes FROM "advisor" WHERE id = :userId LIMIT 1`,
+      {
+        replacements: { userId },
+        type: QueryTypes.SELECT,
+      }
+    ) as Array<{ lattes: string }>;
+
+    if (advisor && advisor.length > 0) {
+      return advisor[0].lattes || null;
+    }
+
+    return null;
   }
 
   public async updatePassword(id: number, password: string) {

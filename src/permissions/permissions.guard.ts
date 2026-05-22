@@ -26,6 +26,32 @@ export class PermissionGuard implements CanActivate {
     }
 
     const request = context.switchToHttp().getRequest();
+    const { params } = request;
+    
+    let targetUserId: string | undefined = params?.id;
+    if (!targetUserId && request.path) {
+      const match = request.path.match(/^\/users\/(\d+)/);
+      if (match) {
+        targetUserId = match[1];
+      }
+    }
+
+    console.log(`[PermissionGuard] Checking access: permissionName="${permissionName}", user="${request.user?.id}", targetUserId="${targetUserId}", path="${request.path}"`);
+
+    if (targetUserId && request.user && Number(request.user.id) === Number(targetUserId)) {
+      if (permissionName === 'user.update' || permissionName === 'user.read') {
+        const requiredSelfPermission = permissionName === 'user.update' ? 'profile.update' : 'profile.read';
+        const userPermissions = await this.permissionsService.getUserPermissions(request.user);
+        const hasPermission = userPermissions.some(p => p.name === requiredSelfPermission);
+        if (hasPermission) {
+          console.log(`[PermissionGuard] Bypassing ${permissionName} for self (User ID: ${request.user.id}) because user has ${requiredSelfPermission}`);
+          return true;
+        } else {
+          console.log(`[PermissionGuard] Denied self bypass: user lacks ${requiredSelfPermission}`);
+          return false;
+        }
+      }
+    }
 
     if (!request.user || !request.user.roles) {
       return true;

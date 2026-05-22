@@ -18,32 +18,35 @@ export class PermissionsService extends CommonService<
     super(model);
   }
 
-  public getUserPermissions(user: User) {
-    return this.model.findAll({
-      include: [
-        {
-          model: RoleHasPermission,
-          // as: 'RoleHasPermission',
-          attributes: ['permission_id', 'role_id'],
-          separate: true,
-          required: false,
-          right: false,
-          where: {
-            role_id: {
-              [Op.in]: user.roles.map((role: Role) => role.dataValues.id),
-            },
+  public async getUserPermissions(user: User): Promise<Permission[]> {
+    const roleIds = user.roles && user.roles.length > 0
+      ? user.roles.map((role: Role) => role.dataValues.id)
+      : [];
+
+    if (roleIds.length === 0) {
+      return this.model.findAll({
+        include: [
+          {
+            model: UserHasPermission,
+            required: true,
+            where: { model_id: user.id },
           },
-        },
-        {
-          model: UserHasPermission,
-          // as: 'UserHasPermission',
-          attributes: ['permission_id'],
-          separate: true,
-          required: false,
-          right: false,
-          where: { model_id: user.id },
-        },
-      ],
+        ],
+      });
+    }
+
+    const sql = `
+      SELECT DISTINCT p.*
+      FROM permissions p
+      LEFT JOIN role_has_permissions rhp ON p.id = rhp.permission_id
+      LEFT JOIN user_has_permissions uhp ON p.id = uhp.permission_id
+      WHERE rhp.role_id IN (:roleIds) OR uhp.model_id = :userId
+    `;
+
+    return this.model.sequelize!.query(sql, {
+      replacements: { roleIds, userId: user.id },
+      model: this.model,
+      mapToModel: true,
     });
   }
 

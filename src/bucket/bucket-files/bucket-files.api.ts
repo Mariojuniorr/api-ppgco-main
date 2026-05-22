@@ -46,8 +46,8 @@ export class BucketFileApi implements BucketFileApiInterface {
         return formData.append(key, value);
       }
 
-      const blob = new Blob([value.buffer], { type: value.mimetype });
-      formData.append(key, blob, value.originalname);
+      const blob = new Blob([new Uint8Array(value.buffer)], { type: value.mimetype });
+      formData.append(key, blob as Blob, value.originalname);
     });
 
     return this.http.instance

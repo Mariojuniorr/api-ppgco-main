@@ -20,7 +20,6 @@ import { MilestoneSituation } from 'src/milestone-situation/entities';
 import { Student } from 'src/student';
 
 @DefaultScope(() => ({
-  attributes: ['*'],
   include: [Project, MilestoneDocument, MilestoneSituation],
 }))
 @Scopes(() => ({
@@ -76,9 +75,6 @@ export class Milestone extends Model {
 
   @Column(DataType.VIRTUAL)
   get studentProject() {
-    return (
-      this.project.dataValues.name +
-      this.project.dataValues.student.dataValues.name
-    );
+    return this.project?.dataValues;
   }
 }

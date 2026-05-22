@@ -27,7 +27,9 @@ import { Can } from 'src/permissions';
 import { Permissions } from './project.enum';
 import { Project } from './entities';
 import { ProjectHasCoadvisorService } from 'src/project-has-coadvisor';
-import { ApiCreatedResponse, ApiOkResponse } from '@nestjs/swagger';
+import { ApiCreatedResponse, ApiOkResponse, ApiTags, ApiOperation } from '@nestjs/swagger';
+
+@ApiTags('Projects')
 
 @Controller('projects')
 export class ProjectController {
@@ -38,6 +40,7 @@ export class ProjectController {
 
   @Get()
   @Can(Permissions.List)
+  @ApiOperation({ summary: 'List all projects', description: 'Retrieves a paginated list of projects.' })
   @ApiOkResponse({ type: PaginatedProjectDto })
   public findAll(
     @Query('page') page: string,
@@ -58,6 +61,7 @@ export class ProjectController {
   }
 
   @Get(':id')
+  @ApiOperation({ summary: 'Get project details', description: 'Retrieves a single project by ID.' })
   @ApiOkResponse({ type: Project })
   @Can(Permissions.Read)
   public findOne(@Param('id') id: string) {
@@ -66,6 +70,7 @@ export class ProjectController {
 
   @Get(':id/coadvisors')
   @Can(Permissions.Read)
+  @ApiOperation({ summary: 'List coadvisors for project', description: 'Retrieves the list of coadvisors assigned to a specific project.' })
   @ApiOkResponse({ type: Project })
   public async findCoadvisors(@Param('id') id: string) {
     return this.projectHasCoadvisorService
@@ -78,6 +83,7 @@ export class ProjectController {
   }
 
   @Post()
+  @ApiOperation({ summary: 'Create a new project', description: 'Registers a new student project.' })
   @ApiCreatedResponse({ type: Project })
   @Can(Permissions.Create)
   public create(
@@ -89,6 +95,7 @@ export class ProjectController {
 
   @Patch(':id')
   @Can(Permissions.Update)
+  @ApiOperation({ summary: 'Update a project', description: 'Updates details of an existing project.' })
   @ApiOkResponse({ type: UpdateSuccessResponse })
   public async update(
     @Param('id') id: string,
@@ -104,6 +111,7 @@ export class ProjectController {
 
   @Delete(':id')
   @Can(Permissions.Delete)
+  @ApiOperation({ summary: 'Delete a project', description: 'Deletes an existing project.' })
   @ApiOkResponse({ type: DeleteSuccessResponse })
   public destroy(@Param('id') id: string) {
     const deleteds = this.projectService.remove(+id);

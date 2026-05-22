@@ -78,8 +78,15 @@ export class User extends ModelWithMedia {
   @Column
   last_name: string;
 
-  @Column
+  @Column({ unique: true })
   email: string;
+
+  @Column({
+    type: DataTypes.BIGINT,
+    unique: true,
+    allowNull: true,
+  })
+  id_pessoa?: number;
 
   @Column
   phone: string;

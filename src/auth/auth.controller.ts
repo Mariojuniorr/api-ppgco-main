@@ -9,10 +9,10 @@ import {
   HttpStatus,
   UnauthorizedException,
 } from '@nestjs/common';
-import { ApiOkResponse } from '@nestjs/swagger';
+import { ApiOkResponse, ApiTags, ApiOperation } from '@nestjs/swagger';
 import _map from 'lodash/map';
 import { BearerToken, Public, ZodValidationPipe } from 'src/core';
-import { CurrentUser, User } from 'src/user';
+import { CurrentUser, User, UserService } from 'src/user';
 import { Permission, PermissionsService } from 'src/permissions';
 import { AuthService } from './auth.service';
 import {
@@ -24,16 +24,19 @@ import {
   RefreshTokenDto,
 } from './dto';
 
+@ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
   constructor(
     private readonly authService: AuthService,
     private readonly permissionService: PermissionsService,
+    private readonly userService: UserService,
   ) {}
 
   @Public()
   @HttpCode(HttpStatus.OK)
   @Post('login')
+  @ApiOperation({ summary: 'User login endpoint', description: 'Authenticates a user and returns a bearer token.' })
   @ApiOkResponse({
     description: `This endpoint is used to autenticate`,
     type: AuthResponseDto,
@@ -43,7 +46,19 @@ export class AuthController {
     return this.authService.signIn(email, password);
   }
 
+  @Public()
+  @HttpCode(HttpStatus.OK)
+  @Post('sso')
+  @ApiOperation({ summary: 'SSO exchange endpoint', description: 'Exchanges UFU SSO token for local JWT.' })
+  public async ssoExchange(@Body() { token }: { token: string }) {
+    if (!token) {
+      throw new UnauthorizedException('Token do SSO é obrigatório');
+    }
+    return this.authService.ssoLogin(token);
+  }
+
   @Get('profile')
+  @ApiOperation({ summary: 'Get current user profile', description: 'Returns the logged-in user profile data and permissions.' })
   @ApiOkResponse({
     description: `This endpoint gets logged in user`,
     type: User,
@@ -55,17 +70,20 @@ export class AuthController {
         return permissions.map(({ name }) => name);
       });
 
+    const lattesUrl = await this.userService.getLattesUrl(user.id);
     const { roles, ...userData } = user;
 
     return {
       ...userData,
       permissions,
       roles: _map(roles, 'name'),
+      lattesUrl,
     };
   }
 
   @Public()
   @Head('check-token')
+  @ApiOperation({ summary: 'Check token validity', description: 'Quickly verifies if the provided token is still valid via HEAD request.' })
   @ApiOkResponse({
     description: `This endpoint checks the validity of the token `,
     type: CheckTokenResponseDto,
@@ -81,6 +99,7 @@ export class AuthController {
   }
 
   @Post('refresh-token')
+  @ApiOperation({ summary: 'Refresh access token', description: 'Exchanges a valid refresh token for a new access token.' })
   @ApiOkResponse({
     description: `This endpoint updates access token`,
     type: AuthResponseDto,

@@ -11,7 +11,7 @@ import {
   Query,
   UploadedFiles,
 } from '@nestjs/common';
-import { Filters, OrderDto, ZodValidationPipe } from 'src/core';
+import { Filters, OrderDto, ZodValidationPipe, Public } from 'src/core';
 import {
   UploadedMediaValidationPipe,
   UseMediaValidatorInterceptor,
@@ -20,12 +20,14 @@ import { Can } from 'src/permissions';
 import { randomString } from 'src/utils';
 import { UserService } from './user.service';
 import { User } from './entities';
-import { createUserSchema, UpdateUserDto, PaginatedUserDto } from './dto';
+import { createUserSchema, CreateUserDto, UpdateUserDto, PaginatedUserDto } from './dto';
 import { CurrentUser } from './user.decorator';
 import { COLLECTIONS } from './user.constants';
 import { Permissions } from './user.enum';
 import { DeleteSuccessResponse, UpdateSuccessResponse } from 'src/core/dto';
-import { ApiCreatedResponse, ApiOkResponse } from '@nestjs/swagger';
+import { ApiCreatedResponse, ApiOkResponse, ApiTags, ApiOperation } from '@nestjs/swagger';
+
+@ApiTags('Users')
 
 @Controller('users')
 export class UserController {
@@ -34,6 +36,7 @@ export class UserController {
   @Post('upload-file')
   @Can(Permissions.Create)
   @UseMediaValidatorInterceptor(COLLECTIONS)
+  @ApiOperation({ summary: 'Upload user file', description: 'Uploads avatar/media file for a user.' })
   @ApiCreatedResponse({ type: User })
   uploadFileAndPassValidation(
     @CurrentUser() user: User,
@@ -49,9 +52,10 @@ export class UserController {
   @Post()
   @Can(Permissions.Create)
   @UseMediaValidatorInterceptor(COLLECTIONS)
+  @ApiOperation({ summary: 'Create a new user', description: 'Registers a new system user with roles.' })
   @ApiCreatedResponse({ type: User })
   createUser(
-    @Body(new ZodValidationPipe(createUserSchema)) createUserDto: any,
+    @Body(new ZodValidationPipe(createUserSchema)) createUserDto: CreateUserDto,
     @UploadedFiles(UploadedMediaValidationPipe(COLLECTIONS))
     files?: Record<string, Express.Multer.File[]>,
   ) {
@@ -72,6 +76,7 @@ export class UserController {
 
   @Get()
   @Can(Permissions.List)
+  @ApiOperation({ summary: 'List all users', description: 'Retrieves paginated user list.' })
   @ApiOkResponse({ type: PaginatedUserDto })
   public findAll(
     @Query('page') page: string,
@@ -94,6 +99,7 @@ export class UserController {
 
   @Get(':id')
   @Can(Permissions.Read)
+  @ApiOperation({ summary: 'Get user details', description: 'Retrieves a single user.' })
   @ApiOkResponse({ type: User })
   public async findOne(@Param('id') id: string[]) {
     const user = await this.userService.findOneWithoutSensiteData(+id);
@@ -104,11 +110,12 @@ export class UserController {
 
     const avatar = await user.getAvatarUrl();
 
-    return { ...user, avatar };
+    return { ...user.toJSON(), avatar };
   }
 
   @Patch(':id')
   @Can(Permissions.Update)
+  @ApiOperation({ summary: 'Update a user', description: 'Partially updates user details.' })
   @ApiOkResponse({ type: UpdateSuccessResponse })
   public update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
     const updateds = this.userService.update(+id, updateUserDto);
@@ -122,6 +129,7 @@ export class UserController {
 
   @Delete(':id')
   @Can(Permissions.Delete)
+  @ApiOperation({ summary: 'Delete a user', description: 'Removes user access from system.' })
   @ApiOkResponse({ type: DeleteSuccessResponse })
   public remove(@Param('id') id: string) {
     const deleteds = this.userService.remove(+id);

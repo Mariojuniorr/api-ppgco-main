@@ -24,7 +24,10 @@ export const updateStudentSchema = z.object({
     .transform(toIsoString),
   sucupira_date: z
     .custom(isValid.date, 'Sucupira date is invalid')
-    .transform(toIsoString),
+    .or(z.literal(''))
+    .transform((date: string) => {
+      return date ? toIsoString(date) : null;
+    }),
   start_date: z
     .custom(isValid.date, 'Start date is invalid')
     .transform(toIsoString),

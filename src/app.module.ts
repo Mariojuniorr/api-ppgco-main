@@ -53,7 +53,7 @@ import { entities } from './app.entities';
         password: configService.get<string>(DB.PASSWORD),
         database: configService.get<string>(DB.DATABASE),
         autoLoadModels: true,
-        synchronize: false,
+        synchronize: true,
         ssl: isProduction(),
         models: [...entities.tables, ...entities.views],
       }),
@@ -101,4 +101,4 @@ import { entities } from './app.entities';
   providers: [AuthService, Logger, ...crudGeneratorCommands],
   exports: [AuthService, ...crudGeneratorCommands],
 })
-export class AppModule {}
+export class AppModule { }
