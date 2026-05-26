@@ -97,6 +97,42 @@ export class UserController {
     );
   }
 
+  @Get('profile')
+  @ApiOperation({ summary: 'Get current user profile', description: 'Retrieves the logged-in user profile.' })
+  @ApiOkResponse({ type: User })
+  public async getProfile(@CurrentUser() { dataValues: user }: User) {
+    const lattesUrl = await this.userService.getLattesUrl(user.id);
+    const matricula = await this.userService.getMatricula(user.id);
+    const { roles, ...userData } = user;
+
+    return {
+      ...userData,
+      roles: roles?.map(r => r.name) || [],
+      lattesUrl,
+      matricula,
+    };
+  }
+
+  @Patch('profile')
+  @ApiOperation({ summary: 'Update own profile', description: 'Partially updates the logged-in user details.' })
+  @ApiOkResponse({ type: UpdateSuccessResponse })
+  public updateProfile(@CurrentUser() { dataValues: user }: User, @Body() updateUserDto: UpdateUserDto) {
+    // Only allow specific fields to be updated by the user themselves
+    const { phone, birth_date, lattesUrl } = updateUserDto;
+    
+    const updateds = this.userService.update(user.id, {
+      phone,
+      birth_date,
+      lattesUrl,
+    });
+
+    return {
+      status: 'success',
+      message: 'Profile updated successfully',
+      updateds,
+    };
+  }
+
   @Get(':id')
   @Can(Permissions.Read)
   @ApiOperation({ summary: 'Get user details', description: 'Retrieves a single user.' })

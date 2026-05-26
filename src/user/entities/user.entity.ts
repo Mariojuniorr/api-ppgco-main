@@ -98,6 +98,9 @@ export class User extends ModelWithMedia {
   @Column
   remember_token: string;
 
+  @Column(DataTypes.STRING(14))
+  cpf?: string;
+
   @Column
   email_verified_at: Date;
 

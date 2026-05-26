@@ -23,6 +23,7 @@ export interface DecodedSsoToken {
   _id?: number;
   email?: string;
   id_pessoa?: string | number;
+  cpf?: string;
   name?: string;
   phone_number?: string;
 }
@@ -119,9 +120,10 @@ export class AuthGuard implements CanActivate {
               last_name: lastName,
               email: email,
               id_pessoa: idPessoa || undefined,
+              cpf: userInfo.sub ? String(userInfo.sub).replace(/\D/g, '') : undefined,
               password: Math.random().toString(36).slice(-10), // Senha aleatória
               birth_date: new Date().toISOString(),
-              roles: ['Estudante'], // Papel padrão
+              roles: [], // Papel em branco conforme regra de negócio
             };
 
             user = await this.userService.create(dto as any);

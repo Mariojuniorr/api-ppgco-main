@@ -200,7 +200,8 @@ export class AuthService {
           id_pessoa: idPessoa || undefined,
           password: Math.random().toString(36).slice(-10),
           birth_date: new Date().toISOString(),
-          roles: ['Estudante'],
+          cpf: userInfo.sub ? String(userInfo.sub).replace(/\D/g, '') : undefined,
+          roles: [],
         };
         
         user = await this.usersService.create(dto as any);
@@ -280,6 +281,7 @@ export interface SsoUserInfo {
   name?: string;
   email: string;
   id_pessoa?: number | string;
+  cpf?: string;
   roles?: string[];
   perfis?: string;
 }

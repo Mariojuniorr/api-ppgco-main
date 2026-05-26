@@ -62,6 +62,9 @@ export class UserService extends CommonService<User, typeof User> implements OnM
             IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='id_pessoa') THEN
                 ALTER TABLE users ADD COLUMN id_pessoa BIGINT;
             END IF;
+            IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='cpf') THEN
+                ALTER TABLE users ADD COLUMN cpf VARCHAR(14);
+            END IF;
         END $$;
       `);
 
@@ -316,6 +319,22 @@ export class UserService extends CommonService<User, typeof User> implements OnM
 
     if (advisor && advisor.length > 0) {
       return advisor[0].lattes || null;
+    }
+
+    return null;
+  }
+
+  public async getMatricula(userId: number): Promise<string | null> {
+    const student = await this.sequelize.query(
+      `SELECT registration FROM "student" WHERE user_id = :userId LIMIT 1`,
+      {
+        replacements: { userId },
+        type: QueryTypes.SELECT,
+      }
+    ) as Array<{ registration: string }>;
+
+    if (student && student.length > 0) {
+      return student[0].registration || null;
     }
 
     return null;

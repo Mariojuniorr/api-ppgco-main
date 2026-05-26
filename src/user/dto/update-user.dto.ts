@@ -10,6 +10,7 @@ export const updateUserSchema = z.object({
   email: z.string().optional(),
   password: z.string().optional(),
   id_pessoa: z.number().optional(),
+  cpf: z.string().optional().nullable(),
   roles: z.array(z.string()).optional(),
   lattesUrl: z.string().optional().nullable(),
 });
